@@ -8,21 +8,22 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    @Column(nullable = false)
+    private String userId;
 
     private Double amount;
 
     public Transaction() {}
 
-    public Transaction(Long userId, Double amount) {
+    public Transaction(String userId, Double amount) {
         this.userId = userId;
         this.amount = amount;
     }
 
     public Long getId() { return id; }
-    public Long getUserId() { return userId; }
+    public String getUserId() { return userId; }
     public Double getAmount() { return amount; }
 
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public void setAmount(Double amount) { this.amount = amount; }
 }
