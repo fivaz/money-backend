@@ -1,5 +1,8 @@
 package com.example.money.service;
 
+import java.math.BigDecimal;
+
+import com.example.money.entity.Transaction;
 import com.example.money.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +15,10 @@ public class BalanceService {
         this.transactionRepository = transactionRepository;
     }
 
-//    public double calculateBalance(String userId) {
-//        return transactionRepository.findByUserId(userId)
-//                .stream()
-//                .mapToDouble(t -> t.getAmount())
-//                .sum();
-//    }
+    public BigDecimal calculateBalance(String userId) {
+        return transactionRepository.findByUserIdAndIsDeletedFalse(userId)
+                .stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

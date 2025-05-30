@@ -4,6 +4,8 @@ import com.example.money.service.BalanceService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 public class MoneyController {
 
@@ -13,10 +15,10 @@ public class MoneyController {
         this.balanceService = balanceService;
     }
 
-//    @GetMapping("/balance-calc")
-//    public double getBalance(HttpServletRequest request) {
-//        String uid = (String) request.getAttribute("firebaseUid");
-//
-//        return balanceService.calculateBalance(uid);
-//    }
+    @GetMapping("/calculate-balance")
+    public BigDecimal getBalance(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("firebaseUid");
+
+        return balanceService.calculateBalance(uid);
+    }
 }

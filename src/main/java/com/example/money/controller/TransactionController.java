@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,20 @@ public class TransactionController {
                 .filter(tx -> tx.getUserId().equals(userId) && !tx.isDeleted())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/current-month")
+    public List<Transaction> getCurrentMonth(
+            @RequestParam int year,
+            @RequestParam int month,
+            HttpServletRequest request
+    ) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        return transactionRepository.findByUserIdAndDateBetweenAndIsDeletedFalse(userId, start, end);
     }
 
     @PostMapping
