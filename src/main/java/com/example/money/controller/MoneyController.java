@@ -4,11 +4,11 @@ import com.example.money.service.BalanceService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class BalanceController {
+public class MoneyController {
 
     private final BalanceService balanceService;
 
-    public BalanceController(BalanceService balanceService) {
+    public MoneyController(BalanceService balanceService) {
         this.balanceService = balanceService;
     }
 
