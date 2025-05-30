@@ -1,9 +1,16 @@
 package com.example.money.entity;
+import lombok.Data;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
 @Entity
 public class Transaction {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -11,19 +18,25 @@ public class Transaction {
     @Column(nullable = false)
     private String userId;
 
-    private Double amount;
+    private String description;
 
-    public Transaction() {}
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public Transaction(String userId, Double amount) {
-        this.userId = userId;
-        this.amount = amount;
+    @Column(precision = 19, scale = 4)
+    private BigDecimal amount;
+
+    private LocalDate date;
+
+    private boolean isPaid = false;
+    private boolean isDeleted = false;
+
+    private LocalDate referenceDate;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 
-    public Long getId() { return id; }
-    public String getUserId() { return userId; }
-    public Double getAmount() { return amount; }
-
-    public void setUserId(String userId) { this.userId = userId; }
-    public void setAmount(Double amount) { this.amount = amount; }
+    // Getters and setters...
 }

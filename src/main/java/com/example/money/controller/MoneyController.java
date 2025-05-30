@@ -13,10 +13,10 @@ public class MoneyController {
         this.balanceService = balanceService;
     }
 
-    @GetMapping("/balance-calc")
-    public double getBalance(HttpServletRequest request) {
-        String uid = (String) request.getAttribute("firebaseUid");
-
-        return balanceService.calculateBalance(uid);
-    }
+//    @GetMapping("/balance-calc")
+//    public double getBalance(HttpServletRequest request) {
+//        String uid = (String) request.getAttribute("firebaseUid");
+//
+//        return balanceService.calculateBalance(uid);
+//    }
 }

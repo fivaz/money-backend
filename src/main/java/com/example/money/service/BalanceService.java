@@ -12,10 +12,10 @@ public class BalanceService {
         this.transactionRepository = transactionRepository;
     }
 
-    public double calculateBalance(String userId) {
-        return transactionRepository.findByUserId(userId)
-                .stream()
-                .mapToDouble(t -> t.getAmount())
-                .sum();
-    }
+//    public double calculateBalance(String userId) {
+//        return transactionRepository.findByUserId(userId)
+//                .stream()
+//                .mapToDouble(t -> t.getAmount())
+//                .sum();
+//    }
 }
