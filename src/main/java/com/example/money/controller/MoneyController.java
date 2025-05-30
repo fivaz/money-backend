@@ -1,6 +1,7 @@
 package com.example.money.controller;
 
 import com.example.money.service.BalanceService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,7 +14,9 @@ public class MoneyController {
     }
 
     @GetMapping("/balance-calc")
-    public double getBalance(@RequestParam Long userId) {
-        return balanceService.calculateBalance(userId);
+    public double getBalance(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("firebaseUid");
+
+        return balanceService.calculateBalance(uid);
     }
 }
