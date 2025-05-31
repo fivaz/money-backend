@@ -1,5 +1,7 @@
 package com.example.money.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -31,15 +33,17 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    @JsonProperty("isPaid")
     private boolean isPaid = false;
+
+    @JsonProperty("isDeleted")
     private boolean isDeleted = false;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate referenceDate;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
-
-    // Getters and setters...
 }
