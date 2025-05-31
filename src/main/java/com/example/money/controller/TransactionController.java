@@ -3,6 +3,7 @@ package com.example.money.controller;
 import com.example.money.entity.Transaction;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,28 +49,37 @@ public class TransactionController {
         LocalDateTime start = startDate.atStartOfDay(); // 00:00
         LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(23, 59, 59); // 23:59:59
 
-        return transactionRepository.findByUserIdAndDateBetweenAndIsDeletedFalse(userId, start, end);
+        return transactionRepository.findByUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDesc(userId, start, end);
     }
 
     @PostMapping
     public ResponseEntity<Transaction> create(@RequestBody Transaction transaction, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
+
         transaction.setUserId(userId);
         transaction.setId(null); // make sure it’s treated as a new entity
         return ResponseEntity.ok(transactionRepository.save(transaction));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Transaction> update(@PathVariable Long id,
-                                              @RequestBody Transaction updated,
-                                              HttpServletRequest request) {
+    public ResponseEntity<?> update(@PathVariable Long id,
+                                    @RequestBody Transaction updated,
+                                    HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         Optional<Transaction> optionalTx = transactionRepository.findById(id);
-        if (optionalTx.isEmpty()) return ResponseEntity.notFound().build();
+        if (optionalTx.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Transaction not found.");
+        }
 
         Transaction tx = optionalTx.get();
-        if (!tx.getUserId().equals(userId) || tx.isDeleted()) return ResponseEntity.notFound().build();
+        if (!tx.getUserId().equals(userId) || tx.isDeleted()) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Unauthorized or deleted transaction.");
+        }
 
         tx.setDescription(updated.getDescription());
         tx.setAmount(updated.getAmount());
@@ -81,14 +91,28 @@ public class TransactionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<?> delete(@PathVariable Long id, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         Optional<Transaction> optionalTx = transactionRepository.findById(id);
-        if (optionalTx.isEmpty()) return ResponseEntity.notFound().build();
+        if (optionalTx.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Transaction not found.");
+        }
 
         Transaction tx = optionalTx.get();
-        if (!tx.getUserId().equals(userId) || tx.isDeleted()) return ResponseEntity.notFound().build();
+        if (!tx.getUserId().equals(userId)) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Unauthorized to delete this transaction.");
+        }
+
+        if (tx.isDeleted()) {
+            return ResponseEntity
+                    .status(HttpStatus.GONE)
+                    .body("Transaction already deleted.");
+        }
 
         tx.setDeleted(true);
         transactionRepository.save(tx);
