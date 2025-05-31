@@ -1,0 +1,85 @@
+package com.example.money.controller;
+
+import com.example.money.entity.Budget;
+import com.example.money.repository.BudgetRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/budgets")
+@RequiredArgsConstructor
+public class BudgetController {
+
+    private final BudgetRepository budgetRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+        List<Budget> budgets = budgetRepository.findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(userId);
+        return ResponseEntity.ok(budgets);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody Budget budget, HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        try {
+            budget.setId(null);
+            budget.setUserId(userId);
+            Budget saved = budgetRepository.save(budget);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to create budget: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Budget updated, HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        Optional<Budget> optional = budgetRepository.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found.");
+        }
+
+        Budget budget = optional.get();
+        if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted budget.");
+        }
+
+        budget.setName(updated.getName());
+        budget.setSortOrder(updated.getSortOrder());
+        budget.setAmount(updated.getAmount());
+        budget.setIcon(updated.getIcon());
+        budget.setParent(updated.getParent());
+
+        Budget saved = budgetRepository.save(budget);
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id, HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        Optional<Budget> optional = budgetRepository.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found.");
+        }
+
+        Budget budget = optional.get();
+        if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or already deleted.");
+        }
+
+        budget.setDeleted(true);
+        budgetRepository.save(budget);
+
+        return ResponseEntity.noContent().build();
+    }
+}
