@@ -1,4 +1,5 @@
 package com.example.money.entity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -26,7 +27,9 @@ public class Transaction {
     @Column(precision = 19, scale = 4)
     private BigDecimal amount;
 
-    private LocalDate date;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    @Column(nullable = false)
+    private LocalDateTime date;
 
     private boolean isPaid = false;
     private boolean isDeleted = false;
