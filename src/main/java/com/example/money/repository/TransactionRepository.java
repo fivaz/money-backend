@@ -11,7 +11,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
 
-    List<Transaction> findByUserIdAndDateBetweenAndIsDeletedFalse(
+    List<Transaction> findByUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDesc(
             String userId,
             LocalDateTime start,
             LocalDateTime end
