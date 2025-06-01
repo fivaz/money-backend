@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,6 +87,37 @@ public class BudgetController {
         Budget saved = budgetRepository.save(budget);
         return ResponseEntity.ok(saved);
     }
+
+    @PutMapping("/reorder")
+    public ResponseEntity<?> reorder(@RequestBody List<Budget> reorderedBudgets, HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        List<Budget> toSave = new ArrayList<>();
+
+        for (int i = 0; i < reorderedBudgets.size(); i++) {
+            Budget incoming = reorderedBudgets.get(i);
+
+            Optional<Budget> optional = budgetRepository.findById(incoming.getId());
+            if (optional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found: ID " + incoming.getId());
+            }
+
+            Budget budget = optional.get();
+
+            if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized to reorder budget: ID " + budget.getId());
+            }
+
+            // Update sort order to match new position
+            budget.setSortOrder(i);
+            toSave.add(budget);
+        }
+
+        budgetRepository.saveAll(toSave);
+
+        return ResponseEntity.noContent().build();
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, HttpServletRequest request) {
