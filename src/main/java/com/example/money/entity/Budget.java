@@ -31,6 +31,9 @@ public class Budget {
 
     private String icon;
 
+    @OneToMany(mappedBy = "budget", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Transaction> transactions = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Budget parent;

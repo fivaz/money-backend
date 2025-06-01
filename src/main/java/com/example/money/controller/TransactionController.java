@@ -49,7 +49,7 @@ public class TransactionController {
         LocalDateTime start = startDate.atStartOfDay(); // 00:00
         LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(23, 59, 59); // 23:59:59
 
-        return transactionRepository.findByUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDesc(userId, start, end);
+        return transactionRepository.findByUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(userId, start, end);
     }
 
     @PostMapping

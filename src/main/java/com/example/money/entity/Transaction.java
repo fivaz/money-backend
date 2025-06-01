@@ -33,6 +33,10 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "budget_id")
+    private Budget budget;
+
     @JsonProperty("isPaid")
     private boolean isPaid = false;
 
