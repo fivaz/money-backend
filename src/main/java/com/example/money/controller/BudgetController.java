@@ -1,7 +1,9 @@
 package com.example.money.controller;
 
 import com.example.money.entity.Budget;
+import com.example.money.entity.Transaction;
 import com.example.money.repository.BudgetRepository;
+import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ public class BudgetController {
 
     private final BudgetRepository budgetRepository;
 
+    private final TransactionRepository transactionRepository;
+
     @GetMapping
     public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
@@ -27,8 +31,9 @@ public class BudgetController {
         return ResponseEntity.ok(budgets);
     }
 
-    @GetMapping("/current-month")
-    public List<Budget> getBudgetsWithTransactionsForCurrentMonth(
+    @GetMapping("/{id}/transactions")
+    public List<Transaction> getTransactionsByBudgetAndMonth(
+            @PathVariable Long id,
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request
@@ -39,7 +44,9 @@ public class BudgetController {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(23, 59, 59);
 
-        return budgetRepository.findWithTransactionsForMonth(userId, start, end);
+        return transactionRepository.findByBudgetIdAndUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(
+                id, userId, start, end
+        );
     }
 
     @PostMapping

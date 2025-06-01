@@ -17,4 +17,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    @Query("""
+    SELECT t FROM Transaction t
+    LEFT JOIN FETCH t.budget
+    WHERE t.budget.id = :budgetId
+      AND t.userId = :userId
+      AND t.date BETWEEN :start AND :end
+      AND t.isDeleted = false
+    ORDER BY t.date DESC
+""")
+    List<Transaction> findByBudgetIdAndUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(
+            @Param("budgetId") Long budgetId,
+            @Param("userId") String userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }
