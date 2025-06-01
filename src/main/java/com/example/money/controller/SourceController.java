@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,7 +24,18 @@ public class SourceController {
 
     private final SourceRepository sourceRepository;
 
-    private final TransactionRepository transactionRepository;
+
+    @GetMapping("/expected-balance")
+    public ResponseEntity<BigDecimal> getExpectedBalance(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        BigDecimal totalBalance = sourceRepository.findByUserIdAndIsDeletedFalse(userId)
+                .stream()
+                .map(Source::getBalance)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return ResponseEntity.ok(totalBalance);
+    }
 
     @GetMapping
     public ResponseEntity<List<Source>> getAll(HttpServletRequest request) {
