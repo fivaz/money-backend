@@ -39,8 +39,8 @@ public class TransactionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/current-month")
-    public List<Transaction> getCurrentMonth(
+    @GetMapping("/by-date")
+    public List<Transaction> getByDate(
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request
