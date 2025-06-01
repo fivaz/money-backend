@@ -1,8 +1,11 @@
 package com.example.money.controller;
 
+import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
+import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +17,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/transactions")
+@RequiredArgsConstructor
 public class TransactionController {
 
     private final TransactionRepository transactionRepository;
 
-    public TransactionController(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
-    }
+    private final BudgetRepository budgetRepository;
 
     @GetMapping
     public List<Transaction> getAll(HttpServletRequest request) {
@@ -53,12 +55,24 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> create(@RequestBody Transaction transaction, HttpServletRequest request) {
+    public ResponseEntity<?> create(@RequestBody Transaction transaction, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         transaction.setUserId(userId);
-        transaction.setId(null); // make sure it’s treated as a new entity
-        return ResponseEntity.ok(transactionRepository.save(transaction));
+        transaction.setId(null); // new entity
+
+        if (transaction.getBudget() != null && transaction.getBudget().getId() != null) {
+            Optional<Budget> budgetOpt = budgetRepository.findById(transaction.getBudget().getId());
+            if (budgetOpt.isEmpty() || !budgetOpt.get().getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid budget");
+            }
+            transaction.setBudget(budgetOpt.get());
+        } else {
+            transaction.setBudget(null);
+        }
+
+        Transaction saved = transactionRepository.save(transaction);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
@@ -69,16 +83,12 @@ public class TransactionController {
 
         Optional<Transaction> optionalTx = transactionRepository.findById(id);
         if (optionalTx.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body("Transaction not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Transaction not found.");
         }
 
         Transaction tx = optionalTx.get();
         if (!tx.getUserId().equals(userId) || tx.isDeleted()) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body("Unauthorized or deleted transaction.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted transaction.");
         }
 
         tx.setDescription(updated.getDescription());
@@ -87,7 +97,19 @@ public class TransactionController {
         tx.setReferenceDate(updated.getReferenceDate());
         tx.setPaid(updated.isPaid());
 
-        return ResponseEntity.ok(transactionRepository.save(tx));
+        // Handle budget update
+        if (updated.getBudget() != null && updated.getBudget().getId() != null) {
+            Optional<Budget> budgetOpt = budgetRepository.findById(updated.getBudget().getId());
+            if (budgetOpt.isEmpty() || !budgetOpt.get().getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid budget");
+            }
+            tx.setBudget(budgetOpt.get());
+        } else {
+            tx.setBudget(null);
+        }
+
+        Transaction saved = transactionRepository.save(tx);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

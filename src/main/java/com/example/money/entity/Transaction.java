@@ -1,7 +1,5 @@
 package com.example.money.entity;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -35,6 +33,7 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")
+    @JsonIgnoreProperties("transactions")
     private Budget budget;
 
     @JsonProperty("isPaid")
