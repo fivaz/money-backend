@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create Firebase credentials file
-        run: echo "${{ secrets.FIREBASE_CREDENTIALS_JSON }}" > src/main/resources/firebase-credentials.properties
+        run: echo "${{ secrets.FIREBASE_CREDENTIALS_JSON }}" > src/main/resources/firebase-credentials.json
 
       - name: Create secrets properties file
         run: |
