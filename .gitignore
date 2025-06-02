@@ -40,3 +40,4 @@ out/
 
 ### Secrets ###
 src/main/resources/firebase-credentials.json
+src/main/resources/secrets.properties
