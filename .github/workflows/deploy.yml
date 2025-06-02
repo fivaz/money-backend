@@ -30,8 +30,9 @@ jobs:
         with:
           context: .
           # for mac silicon
-          platforms: linux/arm64
+#          platforms: linux/arm64
           push: true
+#          tags: ${{ secrets.DOCKERHUB_USERNAME }}/money-backend:silicon
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/money-backend:latest
 
       - name: Trigger Render deployment
