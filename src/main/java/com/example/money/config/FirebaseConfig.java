@@ -14,9 +14,7 @@ public class FirebaseConfig {
     @PostConstruct
     public void init() throws IOException {
         FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(
-                        getClass().getResourceAsStream("/firebase-credentials.json")))
-                .build();
+                .setCredentials(GoogleCredentials.fromStream(getClass().getClassLoader().getResourceAsStream("firebase-credentials.json"))).build();
 
         if (FirebaseApp.getApps().isEmpty()) {
             FirebaseApp.initializeApp(options);
