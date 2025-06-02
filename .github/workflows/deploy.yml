@@ -37,6 +37,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          # for mac silicon
+          platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/money-backend:latest
 
