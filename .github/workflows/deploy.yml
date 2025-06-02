@@ -14,15 +14,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create Firebase credentials file
-        run: echo "${{ secrets.FIREBASE_CREDENTIALS_JSON }}" > src/main/resources/firebase-credentials.properties
-
-      - name: Create secrets properties file
-        run: |
-          cat <<EOT > src/main/resources/secrets.properties
-          spring.datasource.url=${{ secrets.DATABASE_URL }}
-          spring.datasource.username=${{ secrets.DATABASE_USERNAME }}
-          spring.datasource.password=${{ secrets.DATABASE_PASSWORD }}
-          EOT
+        run: echo "${{ secrets.FIREBASE_CREDENTIALS_JSON }}" > src/main/resources/firebase-credentials.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
