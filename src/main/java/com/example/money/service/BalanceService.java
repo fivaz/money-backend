@@ -18,6 +18,7 @@ public class BalanceService {
     public BigDecimal calculateBalance(String userId) {
         return transactionRepository.findByUserIdAndIsDeletedFalse(userId)
                 .stream()
+                .filter(Transaction::isPaid) // Only include transactions where isPaid is true
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
