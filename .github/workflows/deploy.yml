@@ -38,4 +38,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/money-backend:latest
