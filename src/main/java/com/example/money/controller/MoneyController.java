@@ -2,6 +2,7 @@ package com.example.money.controller;
 
 import com.example.money.service.BalanceService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
