@@ -16,6 +16,11 @@ public class MoneyController {
         this.balanceService = balanceService;
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<String> healthCheck() {
+        return ResponseEntity.ok("OK");
+    }
+
     @GetMapping("/calculate-balance")
     public BigDecimal getBalance(HttpServletRequest request) {
         String uid = (String) request.getAttribute("firebaseUid");

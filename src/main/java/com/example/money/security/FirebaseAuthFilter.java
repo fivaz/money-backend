@@ -17,7 +17,7 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
 
     // Add routes to skip here
     private static final List<String> EXCLUDED_PATHS = List.of(
-            "/actuator/health",
+            "/health",
             "/public",
             "/swagger-ui",
             "/v3/api-docs"
