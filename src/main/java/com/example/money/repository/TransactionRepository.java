@@ -23,7 +23,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     LEFT JOIN FETCH t.budget
     WHERE t.budget.id = :budgetId
       AND t.userId = :userId
-      AND t.date BETWEEN :start AND :end
+      AND (
+        CASE
+            WHEN t.referenceDate IS NOT NULL
+            THEN CAST(t.referenceDate AS LocalDateTime)
+            ELSE t.date
+        END
+      ) BETWEEN :start AND :end
       AND t.isDeleted = false
     ORDER BY t.date DESC
 """)
