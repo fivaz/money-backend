@@ -47,9 +47,7 @@ public class TransactionController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        LocalDate monthStart = LocalDate.of(year, month, 1);
-
-        return transactionRepository.findByUserIdAndMonthOrSpreadAndIsDeletedFalseOrderByDateDescWithBudget(userId, monthStart);
+        return transactionRepository.findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(userId, month, year);
     }
 
     @PostMapping

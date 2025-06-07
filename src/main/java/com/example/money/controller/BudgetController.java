@@ -10,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,12 +39,8 @@ public class BudgetController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(23, 59, 59);
-
-        return transactionRepository.findByBudgetIdAndUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(
-                id, userId, start, end
+        return transactionRepository.findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
+                id, userId, month, year
         );
     }
 

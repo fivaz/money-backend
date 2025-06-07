@@ -20,54 +20,60 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     WHERE t.userId = :userId
       AND t.isDeleted = false
       AND (
-        EXTRACT(YEAR FROM CAST(t.date AS TIMESTAMP)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
-        AND EXTRACT(MONTH FROM CAST(t.date AS TIMESTAMP)) = EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
+        (EXTRACT(YEAR FROM t.date) = :year AND EXTRACT(MONTH FROM t.date) = :month)
         OR (
-          t.spreadStart IS NOT NULL
-          AND t.spreadEnd IS NOT NULL
+          t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
           AND (
-            EXTRACT(YEAR FROM CAST(t.spreadStart AS DATE)) < EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
-            OR (
-              EXTRACT(YEAR FROM CAST(t.spreadStart AS DATE)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
-              AND EXTRACT(MONTH FROM CAST(t.spreadStart AS DATE)) <= EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
-            )
+            EXTRACT(YEAR FROM t.spreadStart) < :year OR
+            (EXTRACT(YEAR FROM t.spreadStart) = :year AND EXTRACT(MONTH FROM t.spreadStart) <= :month)
           )
           AND (
-            EXTRACT(YEAR FROM CAST(t.spreadEnd AS DATE)) > EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
-            OR (
-              EXTRACT(YEAR FROM CAST(t.spreadEnd AS DATE)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
-              AND EXTRACT(MONTH FROM CAST(t.spreadEnd AS DATE)) >= EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
-            )
+            EXTRACT(YEAR FROM t.spreadEnd) > :year OR
+            (EXTRACT(YEAR FROM t.spreadEnd) = :year AND EXTRACT(MONTH FROM t.spreadEnd) >= :month)
           )
         )
       )
     ORDER BY t.date DESC
 """)
-    List<Transaction> findByUserIdAndMonthOrSpreadAndIsDeletedFalseOrderByDateDescWithBudget(
+    List<Transaction> findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(
             @Param("userId") String userId,
-            @Param("monthStart") LocalDate monthStart
+            @Param("month") int month,
+            @Param("year") int year
     );
 
-    @Query("""
-    SELECT t FROM Transaction t
-    LEFT JOIN FETCH t.budget
-    WHERE t.budget.id = :budgetId
-      AND t.userId = :userId
+    @Query(value = """
+    SELECT t.* FROM transaction t
+    LEFT JOIN budget b ON b.id = t.budget_id
+    WHERE b.id = :budgetId
+      AND t.user_id = :userId
+      AND t.is_deleted = false
       AND (
-        CASE
-            WHEN t.referenceDate IS NOT NULL
-            THEN CAST(t.referenceDate AS LocalDateTime)
-            ELSE t.date
-        END
-      ) BETWEEN :start AND :end
-      AND t.isDeleted = false
+        (
+          EXTRACT(MONTH FROM COALESCE(t.reference_date, t.date)) = :month
+          AND EXTRACT(YEAR FROM COALESCE(t.reference_date, t.date)) = :year
+        )
+        OR (
+          t.spread_start IS NOT NULL AND t.spread_end IS NOT NULL
+          AND (
+            (
+              EXTRACT(YEAR FROM t.spread_start) < :year OR
+              (EXTRACT(YEAR FROM t.spread_start) = :year AND EXTRACT(MONTH FROM t.spread_start) <= :month)
+            )
+            AND
+            (
+              EXTRACT(YEAR FROM t.spread_end) > :year OR
+              (EXTRACT(YEAR FROM t.spread_end) = :year AND EXTRACT(MONTH FROM t.spread_end) >= :month)
+            )
+          )
+        )
+      )
     ORDER BY t.date DESC
-""")
-    List<Transaction> findByBudgetIdAndUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(
+    """, nativeQuery = true)
+    List<Transaction> findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
             @Param("budgetId") Long budgetId,
             @Param("userId") String userId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            @Param("month") int month,
+            @Param("year") int year
     );
 
     @Query(value = """
