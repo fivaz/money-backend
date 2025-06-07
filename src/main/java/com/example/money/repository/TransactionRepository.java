@@ -7,16 +7,45 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
 
-    @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.budget WHERE t.userId = :userId AND t.date BETWEEN :start AND :end AND t.isDeleted = false ORDER BY t.date DESC")
-    List<Transaction> findByUserIdAndDateBetweenAndIsDeletedFalseOrderByDateDescWithBudget(
+    //fetch transactions if date match month and year of monthStart, or if month and year of spreadStart and spreadEnd fits between the month and year of monthStart
+    @Query("""
+    SELECT t FROM Transaction t
+    LEFT JOIN FETCH t.budget
+    WHERE t.userId = :userId
+      AND t.isDeleted = false
+      AND (
+        EXTRACT(YEAR FROM CAST(t.date AS TIMESTAMP)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
+        AND EXTRACT(MONTH FROM CAST(t.date AS TIMESTAMP)) = EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
+        OR (
+          t.spreadStart IS NOT NULL
+          AND t.spreadEnd IS NOT NULL
+          AND (
+            EXTRACT(YEAR FROM CAST(t.spreadStart AS DATE)) < EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
+            OR (
+              EXTRACT(YEAR FROM CAST(t.spreadStart AS DATE)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
+              AND EXTRACT(MONTH FROM CAST(t.spreadStart AS DATE)) <= EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
+            )
+          )
+          AND (
+            EXTRACT(YEAR FROM CAST(t.spreadEnd AS DATE)) > EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
+            OR (
+              EXTRACT(YEAR FROM CAST(t.spreadEnd AS DATE)) = EXTRACT(YEAR FROM CAST(:monthStart AS DATE))
+              AND EXTRACT(MONTH FROM CAST(t.spreadEnd AS DATE)) >= EXTRACT(MONTH FROM CAST(:monthStart AS DATE))
+            )
+          )
+        )
+      )
+    ORDER BY t.date DESC
+""")
+    List<Transaction> findByUserIdAndMonthOrSpreadAndIsDeletedFalseOrderByDateDescWithBudget(
             @Param("userId") String userId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            @Param("monthStart") LocalDate monthStart
     );
 
     @Query("""
