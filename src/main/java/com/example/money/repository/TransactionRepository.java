@@ -103,4 +103,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       AND t.is_paid = true
     """, nativeQuery = true)
     BigDecimal calculateBalance(@Param("userId") String userId);
+
+
+    @Query("""
+    SELECT t FROM Transaction t
+    LEFT JOIN FETCH t.budget
+    WHERE t.userId = :userId
+        AND t.isDeleted = false
+        AND (
+          :query IS NULL OR
+          :query = '' OR
+          LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
+          (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
+        )
+    """)
+    List<Transaction> searchByDescriptionOrBudgetName(
+            @Param("userId") String userId,
+            @Param("query") String query);
 }

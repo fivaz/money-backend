@@ -57,6 +57,24 @@ public class TransactionController {
                 .toList();
     }
 
+    @GetMapping("/search")
+    public List<TransactionDTO> searchTransactions(
+            @RequestParam String query,
+            HttpServletRequest request
+    ) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        if (query == null || query.isBlank()) {
+            return List.of(); // return empty list
+        }
+
+        List<Transaction> transactions = transactionRepository.searchByDescriptionOrBudgetName(userId, query);
+
+        return transactions.stream()
+                .map(TransactionMapper::toDTO)
+                .toList();
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Transaction transaction, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
