@@ -96,6 +96,8 @@ public class TransactionController {
         tx.setDate(updated.getDate());
         tx.setReferenceDate(updated.getReferenceDate());
         tx.setPaid(updated.isPaid());
+        tx.setSpreadStart(updated.getSpreadStart());
+        tx.setSpreadEnd(updated.getSpreadEnd());
 
         // Handle budget update
         if (updated.getBudget() != null && updated.getBudget().getId() != null) {

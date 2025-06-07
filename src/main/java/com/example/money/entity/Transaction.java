@@ -24,7 +24,7 @@ public class Transaction {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(precision = 19, scale = 4)
+    @Column(precision = 19, scale = 4, nullable = false)
     private BigDecimal amount;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
@@ -44,6 +44,12 @@ public class Transaction {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate referenceDate;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private LocalDate spreadStart;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private LocalDate spreadEnd;
 
     @PrePersist
     protected void onCreate() {
