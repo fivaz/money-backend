@@ -1,7 +1,9 @@
 package com.example.money.controller;
 
+import com.example.money.dto.TransactionDTO;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
+import com.example.money.mapper.TransactionMapper;
 import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,23 +33,28 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getById(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<TransactionDTO> getById(@PathVariable Long id, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
         return transactionRepository.findById(id)
                 .filter(tx -> tx.getUserId().equals(userId) && !tx.isDeleted())
+                .map(TransactionMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/by-date")
-    public List<Transaction> getByDate(
+    public List<TransactionDTO> getByDate(
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        return transactionRepository.findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(userId, month, year);
+        List<Transaction> transactions = transactionRepository.findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(userId, month, year);
+
+        return transactions.stream()
+                .map(TransactionMapper::toDTO)
+                .toList();
     }
 
     @PostMapping
