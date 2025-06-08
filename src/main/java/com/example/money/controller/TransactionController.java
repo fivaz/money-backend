@@ -29,21 +29,21 @@ public class TransactionController {
 
     private final BudgetRepository budgetRepository;
 
-    @GetMapping
-    public List<Transaction> getAll(HttpServletRequest request) {
-        String userId = (String) request.getAttribute("firebaseUid");
-        return transactionRepository.findByUserIdAndIsDeletedFalse(userId);
-    }
+//    @GetMapping
+//    public List<Transaction> getAll(HttpServletRequest request) {
+//        String userId = (String) request.getAttribute("firebaseUid");
+//        return transactionRepository.findByUserIdAndIsDeletedFalse(userId);
+//    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TransactionDTO> getById(@PathVariable Long id, HttpServletRequest request) {
-        String userId = (String) request.getAttribute("firebaseUid");
-        return transactionRepository.findById(id)
-                .filter(tx -> tx.getUserId().equals(userId) && !tx.isDeleted())
-                .map(TransactionMapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<TransactionDTO> getById(@PathVariable Long id, HttpServletRequest request) {
+//        String userId = (String) request.getAttribute("firebaseUid");
+//        return transactionRepository.findById(id)
+//                .filter(tx -> tx.getUserId().equals(userId) && !tx.isDeleted())
+//                .map(TransactionMapper::toDTO)
+//                .map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
 
     @GetMapping("/by-date")
     public List<TransactionDTO> getByDate(
