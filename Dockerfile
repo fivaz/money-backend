@@ -2,12 +2,19 @@ FROM gradle:8.14-jdk17 AS build
 
 WORKDIR /app
 
-COPY . .
+# Copy only the necessary build files first (for better caching)
+COPY build.gradle settings.gradle ./
+
+# Copy the gradle wrapper directory (with wrapper files)
+COPY gradle ./gradle
+
+# Copy the source code
+COPY src ./src
 
 RUN gradle build -x test --no-daemon
 
 
-FROM eclipse-temurin:21
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
