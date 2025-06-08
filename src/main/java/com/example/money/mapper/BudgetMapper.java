@@ -11,7 +11,6 @@ public class BudgetMapper {
         dto.setId(budget.getId());
         dto.setName(budget.getName());
         dto.setAmount(budget.getAmount());
-        dto.setParent(budget.getParent());
         dto.setIcon(budget.getIcon());
         dto.setSortOrder(budget.getSortOrder());
 

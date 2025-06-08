@@ -8,6 +8,9 @@ import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -58,21 +61,18 @@ public class TransactionController {
     }
 
     @GetMapping("/search")
-    public List<TransactionDTO> searchTransactions(
+    public Page<TransactionDTO> searchTransactions(
             @RequestParam String query,
+            @PageableDefault(size = 10) Pageable pageable,
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         if (query == null || query.isBlank()) {
-            return List.of(); // return empty list
+            return Page.empty(pageable);
         }
 
-        List<Transaction> transactions = transactionRepository.searchByDescriptionOrBudgetName(userId, query);
-
-        return transactions.stream()
-                .map(TransactionMapper::toDTO)
-                .toList();
+        return transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable).map(TransactionMapper::toDTO);
     }
 
     @PostMapping

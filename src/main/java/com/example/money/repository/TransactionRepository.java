@@ -1,13 +1,14 @@
 package com.example.money.repository;
 
 import com.example.money.entity.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -106,18 +107,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
 
     @Query("""
-    SELECT t FROM Transaction t
-    LEFT JOIN FETCH t.budget
-    WHERE t.userId = :userId
-        AND t.isDeleted = false
-        AND (
-          :query IS NULL OR
-          :query = '' OR
-          LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
-          (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
-        )
-    """)
-    List<Transaction> searchByDescriptionOrBudgetName(
+SELECT t FROM Transaction t
+LEFT JOIN FETCH t.budget
+WHERE t.userId = :userId
+  AND t.isDeleted = false
+  AND (
+    :query IS NULL OR
+    :query = '' OR
+    LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
+  )
+""")
+    Page<Transaction> searchByDescriptionOrBudgetName(
             @Param("userId") String userId,
-            @Param("query") String query);
+            @Param("query") String query,
+            Pageable pageable
+    );
 }
