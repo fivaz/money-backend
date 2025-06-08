@@ -36,10 +36,7 @@ public class MoneyController {
                                                      HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(23, 59, 59);
 
-        return transactionRepository.calculateBudgetedAmountBetween(userId, start, end);
+        return transactionRepository.calculateBudgetedAmountByMonthAndYear(userId, month, year);
     }
 }

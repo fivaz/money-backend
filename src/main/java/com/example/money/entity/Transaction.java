@@ -33,7 +33,6 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")
-    @JsonIgnoreProperties("transactions")
     private Budget budget;
 
     @JsonProperty("isPaid")

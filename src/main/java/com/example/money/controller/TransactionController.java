@@ -1,9 +1,7 @@
 package com.example.money.controller;
 
-import com.example.money.dto.TransactionDTO;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
-import com.example.money.mapper.TransactionMapper;
 import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +34,7 @@ public class TransactionController {
 //    }
 
 //    @GetMapping("/{id}")
-//    public ResponseEntity<TransactionDTO> getById(@PathVariable Long id, HttpServletRequest request) {
+//    public ResponseEntity<Transaction> getById(@PathVariable Long id, HttpServletRequest request) {
 //        String userId = (String) request.getAttribute("firebaseUid");
 //        return transactionRepository.findById(id)
 //                .filter(tx -> tx.getUserId().equals(userId) && !tx.isDeleted())
@@ -46,22 +44,18 @@ public class TransactionController {
 //    }
 
     @GetMapping("/by-date")
-    public List<TransactionDTO> getByDate(
+    public List<Transaction> getByDate(
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        List<Transaction> transactions = transactionRepository.findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(userId, month, year);
-
-        return transactions.stream()
-                .map(TransactionMapper::toDTO)
-                .toList();
+        return transactionRepository.findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(userId, month, year);
     }
 
     @GetMapping("/search")
-    public Page<TransactionDTO> searchTransactions(
+    public Page<Transaction> searchTransactions(
             @RequestParam String query,
             @PageableDefault(size = 10) Pageable pageable,
             HttpServletRequest request
@@ -72,7 +66,7 @@ public class TransactionController {
             return Page.empty(pageable);
         }
 
-        return transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable).map(TransactionMapper::toDTO);
+        return transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable);
     }
 
     @PostMapping

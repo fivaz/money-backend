@@ -1,11 +1,7 @@
 package com.example.money.controller;
 
-import com.example.money.dto.BudgetDTO;
-import com.example.money.dto.TransactionDTO;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
-import com.example.money.mapper.BudgetMapper;
-import com.example.money.mapper.TransactionMapper;
 import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,16 +24,15 @@ public class BudgetController {
     private final TransactionRepository transactionRepository;
 
     @GetMapping
-    public ResponseEntity<List<BudgetDTO>> getAll(HttpServletRequest request) {
+    public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
         List<Budget> budgets = budgetRepository.findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(userId);
-        List<BudgetDTO> budgetDTOS = budgets.stream().map(BudgetMapper::toDTO).toList();
 
-        return ResponseEntity.ok(budgetDTOS);
+        return ResponseEntity.ok(budgets);
     }
 
     @GetMapping("/{id}/transactions")
-    public List<TransactionDTO> getTransactionsByBudgetAndMonth(
+    public List<Transaction> getTransactionsByBudgetAndMonth(
             @PathVariable Long id,
             @RequestParam int year,
             @RequestParam int month,
@@ -45,11 +40,9 @@ public class BudgetController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        List<Transaction> transactions = transactionRepository.findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
+        return transactionRepository.findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
                 id, userId, month, year
         );
-
-        return transactions.stream().map(TransactionMapper::toDTO).toList();
     }
 
     @PostMapping

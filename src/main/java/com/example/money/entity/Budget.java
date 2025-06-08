@@ -1,5 +1,6 @@
 package com.example.money.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -34,9 +35,6 @@ public class Budget {
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Budget parent;
-
-    @OneToMany(mappedBy = "parent")
-    private List<Budget> children = new ArrayList<>();
 
     @JsonProperty("isDeleted")
     private boolean isDeleted = false;
