@@ -62,8 +62,8 @@ public class TransactionController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        if (query == null || query.isBlank()) {
-            return Page.empty(pageable);
+        if (query != null && !query.isBlank()) {
+            query = query.trim().toLowerCase();
         }
 
         return transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable);

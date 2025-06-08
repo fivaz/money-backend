@@ -100,17 +100,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
 
     @Query("""
-SELECT t FROM Transaction t
-LEFT JOIN FETCH t.budget
-WHERE t.userId = :userId
-  AND t.isDeleted = false
-  AND (
-    :query IS NULL OR
-    :query = '' OR
-    LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
-    (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
-  )
-""")
+    SELECT t FROM Transaction t
+    LEFT JOIN FETCH t.budget
+    WHERE t.userId = :userId
+      AND t.isDeleted = false
+      AND (
+        :query IS NULL OR
+        :query = '' OR
+        LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
+        (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
+      )
+    """)
     Page<Transaction> searchByDescriptionOrBudgetName(
             @Param("userId") String userId,
             @Param("query") String query,
