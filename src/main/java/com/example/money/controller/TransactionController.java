@@ -1,5 +1,6 @@
 package com.example.money.controller;
 
+import com.example.money.dto.MonthlyExpenseSummary;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
 import com.example.money.repository.BudgetRepository;
@@ -140,5 +141,13 @@ public class TransactionController {
         tx.setDeleted(true);
         transactionRepository.save(tx);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/monthly-summary")
+    public ResponseEntity<List<MonthlyExpenseSummary>> getMonthlySummary(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        List<MonthlyExpenseSummary> summary = transactionRepository.findMonthlyExpenseSummary(userId);
+        return ResponseEntity.ok(summary);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.money.repository;
 
+import com.example.money.dto.MonthlyExpenseSummary;
 import com.example.money.entity.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -116,4 +117,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("query") String query,
             Pageable pageable
     );
+
+    @Query(value = """
+    SELECT TO_CHAR(t.date, 'YYYY-MM') AS time, ABS(SUM(t.amount)) AS total
+    FROM transaction t
+    WHERE t.amount < 0 AND t.user_id = :userId
+    GROUP BY TO_CHAR(t.date, 'YYYY-MM')
+    ORDER BY TO_CHAR(t.date, 'YYYY-MM') ASC
+    """, nativeQuery = true)
+    List<MonthlyExpenseSummary> findMonthlyExpenseSummary(@Param("userId") String userId);
 }
