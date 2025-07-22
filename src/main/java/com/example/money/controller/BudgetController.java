@@ -78,6 +78,8 @@ public class BudgetController {
         budget.setAmount(updated.getAmount());
         budget.setIcon(updated.getIcon());
         budget.setParent(updated.getParent());
+        budget.setStartAt(updated.getStartAt());
+        budget.setEndAt(updated.getEndAt());
 
         Budget saved = budgetRepository.save(budget);
         return ResponseEntity.ok(saved);

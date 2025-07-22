@@ -1,11 +1,13 @@
 package com.example.money.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,12 @@ public class Budget {
     private BigDecimal amount;
 
     private String icon;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private LocalDate startAt;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private LocalDate endAt;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
