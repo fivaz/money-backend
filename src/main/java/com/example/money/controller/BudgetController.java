@@ -17,6 +17,8 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.example.money.service.BudgetService.monthsBetweenInclusive;
+
 @RestController
 @RequestMapping("/budgets")
 @RequiredArgsConstructor
@@ -50,8 +52,8 @@ public class BudgetController {
         if (budgets.isEmpty()) return ResponseEntity.ok(List.of());
 
         List<Long> budgetIds = budgets.stream().map(Budget::getId).toList();
-        YearMonth previousMonth = targetMonth.minusMonths(1);
-        LocalDate startOfPrev = budgets.stream()
+        YearMonth previousMonth = YearMonth.of(year, month).minusMonths(1);
+        LocalDate startOfPeriod = budgets.stream()
                 .map(Budget::getStartAt)
                 .filter(Objects::nonNull)
                 .min(LocalDate::compareTo)
@@ -60,31 +62,41 @@ public class BudgetController {
         LocalDate endOfPrev = previousMonth.atEndOfMonth();
 
         List<Object[]> sums = transactionRepository.sumAmountsByBudgetIdsAndPeriod(
-                budgetIds, userId, startOfPrev, endOfPrev
+                budgetIds, userId, startOfPeriod, endOfPrev
         );
 
         // map: budgetId → sum
-        Map<Long, BigDecimal> amountMap = sums.stream()
+        Map<Long, BigDecimal> spentMap = sums.stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (BigDecimal) row[1]
                 ));
 
         List<BudgetDTO> result = budgets.stream()
-                .map(b -> new BudgetDTO(
-                        b.getId(),
-                        b.getUserId(),
-                        b.getName(),
-                        b.getSortOrder(),
-                        b.getCreatedAt(),
-                        b.getAmount(),
-                        b.getIcon(),
-                        b.getStartAt(),
-                        b.getEndAt(),
-                        b.getParent() != null ? b.getParent().getId() : null,
-                        b.isDeleted(),
-                        amountMap.getOrDefault(b.getId(), BigDecimal.ZERO)
-                ))
+                .map(b -> {
+                    int months = monthsBetweenInclusive(b.getStartAt(), previousMonth);
+                    BigDecimal allocated = b.getAmount() != null
+                            ? b.getAmount().multiply(BigDecimal.valueOf(months))
+                            : BigDecimal.ZERO;
+
+                    BigDecimal spent = spentMap.getOrDefault(b.getId(), BigDecimal.ZERO);
+                    BigDecimal previousAmount = allocated.add(spent);
+
+                    return new BudgetDTO(
+                            b.getId(),
+                            b.getUserId(),
+                            b.getName(),
+                            b.getSortOrder(),
+                            b.getCreatedAt(),
+                            b.getAmount(),
+                            b.getIcon(),
+                            b.getStartAt(),
+                            b.getEndAt(),
+                            b.getParent() != null ? b.getParent().getId() : null,
+                            b.isDeleted(),
+                            previousAmount
+                    );
+                })
                 .toList();
 
         return ResponseEntity.ok(result);
