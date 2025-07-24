@@ -60,15 +60,15 @@ public class BudgetService {
 
     private BigDecimal computeAccumulativeAmount(Budget budget, YearMonth targetMonth) {
         if (!budget.isAccumulative()) {
-            return budget.getAmount();
+            return BigDecimal.ZERO;
         }
 
         LocalDate calcStart = budget.getStartAt();
-        LocalDate calcEnd = targetMonth.minusMonths(1).atEndOfMonth();
-
-        if (calcStart == null || calcStart.isAfter(calcEnd)) {
-            return budget.getAmount();
+        if (calcStart == null || !YearMonth.from(calcStart).isBefore(targetMonth)) {
+            return BigDecimal.ZERO;
         }
+
+        LocalDate calcEnd = targetMonth.minusMonths(1).atEndOfMonth();
 
         BigDecimal previousTransactionsSum = transactionRepository
                 .findByBudgetIdAndDateRange(budget.getId(), calcStart, calcEnd)
