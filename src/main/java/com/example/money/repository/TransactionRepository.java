@@ -16,6 +16,12 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
 
+    @Query(value = "SELECT * FROM transaction t WHERE t.budget_id = :budgetId AND DATE(t.date) >= :startDate AND DATE(t.date) <= :endDate", nativeQuery = true)
+    List<Transaction> findByBudgetIdAndDateRange(
+            @Param("budgetId") Long budgetId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     //fetch transactions if date match month and year of monthStart, or if month and year of spreadStart and spreadEnd fits between the month and year of monthStart
     @Query("""
                 SELECT t FROM Transaction t
@@ -77,9 +83,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
     @Query("""
-            SELECT t.budget.id, COALESCE(SUM(t.amount), 0)
+            SELECT COALESCE(SUM(t.amount), 0)
             FROM Transaction t
-            WHERE t.budget.id IN :budgetIds
+              WHERE t.budget.id = :budgetId
               AND t.userId = :userId
               AND t.isDeleted = false
               AND (
@@ -92,10 +98,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.spreadStart <= :endDate
                 )
               )
-            GROUP BY t.budget.id
             """)
-    List<Object[]> sumAmountsByBudgetIdsAndPeriod(
-            @Param("budgetIds") List<Long> budgetIds,
+    BigDecimal sumAmountsByBudgetIdsAndPeriod(
+            @Param("budgetId") Long budgetId,
             @Param("userId") String userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

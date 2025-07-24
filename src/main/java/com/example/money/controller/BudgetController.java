@@ -1,5 +1,6 @@
 package com.example.money.controller;
 
+import com.example.money.dto.BudgetDetailsDTO;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
 import com.example.money.repository.BudgetRepository;
@@ -14,7 +15,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.example.money.service.BudgetService.getDTO;
 import static com.example.money.service.BudgetService.monthsBetweenInclusive;
 
 @RestController
@@ -48,47 +51,59 @@ public class BudgetController {
         return budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
     }
 
-    @GetMapping("/{id}/previous-amount")
-    public ResponseEntity<BigDecimal> getPreviousAmount(
-            @PathVariable Long id,
+    @GetMapping("/by-date-with-details")
+    public List<BudgetDetailsDTO> getByDateWithDetails(
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
+        YearMonth targetMonth = YearMonth.of(year, month);
+        LocalDate firstDay = targetMonth.atDay(1);
+        LocalDate lastDay = targetMonth.atEndOfMonth();
 
-        Optional<Budget> optionalBudget = budgetRepository.findById(id);
-        if (optionalBudget.isEmpty()) return ResponseEntity.notFound().build();
+        List<Budget> budgets = budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
 
-        Budget budget = optionalBudget.get();
-        if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        return budgets.stream().map(budget -> {
+            BudgetDetailsDTO dto = getDTO(budget);
 
-        YearMonth previousMonth = YearMonth.of(year, month).minusMonths(1);
-        LocalDate startOfPeriod = budget.getStartAt() != null
-                ? budget.getStartAt()
-                : previousMonth.atDay(1);
-        LocalDate endOfPrev = previousMonth.atEndOfMonth();
+            // Map parent Budget to BudgetDetailsDTO, if present
+            if (budget.getParent() != null) {
+                BudgetDetailsDTO parentDto = getDTO(budget.getParent());
+                dto.setParent(parentDto);
+            } else {
+                dto.setParent(null);
+            }
 
-        List<Object[]> sums = transactionRepository.sumAmountsByBudgetIdsAndPeriod(
-                List.of(id), userId, startOfPeriod, endOfPrev
-        );
+            if (budget.isAccumulative()) {
+                LocalDate calcStart = budget.getStartAt();
+                LocalDate calcEnd = targetMonth.minusMonths(1).atEndOfMonth();
 
-        BigDecimal spent = sums.stream()
-                .filter(row -> ((Long) row[0]).equals(id))
-                .map(row -> (BigDecimal) row[1])
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
+                if (!calcStart.isAfter(calcEnd)) {
+                    BigDecimal previousTransactionsSum = transactionRepository
+                            .findByBudgetIdAndDateRange(budget.getId(), calcStart, calcEnd)
+                            .stream()
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int months = monthsBetweenInclusive(budget.getStartAt(), previousMonth);
-        BigDecimal allocated = budget.getAmount() != null
-                ? budget.getAmount().multiply(BigDecimal.valueOf(months))
-                : BigDecimal.ZERO;
+                    long monthsBetween = java.time.temporal.ChronoUnit.MONTHS.between(
+                            YearMonth.from(calcStart),
+                            targetMonth
+                    );
 
-        BigDecimal previousAmount = allocated.add(spent);
+                    BigDecimal accumulativeAmount = budget.getAmount()
+                            .multiply(BigDecimal.valueOf(monthsBetween))
+                            .subtract(previousTransactionsSum);
+                    dto.setAccumulativeAmount(accumulativeAmount);
+                } else {
+                    dto.setAccumulativeAmount(budget.getAmount());
+                }
+            } else {
+                dto.setAccumulativeAmount(budget.getAmount());
+            }
 
-        return ResponseEntity.ok(previousAmount);
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}/transactions")
@@ -140,6 +155,7 @@ public class BudgetController {
         budget.setParent(updated.getParent());
         budget.setStartAt(updated.getStartAt());
         budget.setEndAt(updated.getEndAt());
+        budget.setAccumulative(updated.isAccumulative());
 
         Budget saved = budgetRepository.save(budget);
         return ResponseEntity.ok(saved);
