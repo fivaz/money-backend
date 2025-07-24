@@ -1,10 +1,12 @@
 package com.example.money.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class Source {
 
     private String icon;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")
     private boolean isDeleted = false;
 

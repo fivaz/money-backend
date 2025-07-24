@@ -34,16 +34,19 @@ public class Budget {
 
     private String icon;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Column(nullable = false)
+    @JsonProperty("isAccumulative")
+    private boolean isAccumulative = false;
+
     private LocalDate startAt;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate endAt;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Budget parent;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")
     private boolean isDeleted = false;
 

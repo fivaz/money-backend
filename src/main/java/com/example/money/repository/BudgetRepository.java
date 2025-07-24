@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
@@ -22,7 +21,7 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
               )
             ORDER BY b.sortOrder ASC
             """)
-    List<Budget> findBudgetsWithinDateRange(
+    List<Budget> findBudgetsByUserIdWithinDateRangeSortOrderAsc(
             @Param("userId") String userId,
             @Param("start") LocalDate start,
             @Param("end") LocalDate end

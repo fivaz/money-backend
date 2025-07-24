@@ -38,17 +38,15 @@ public class Transaction {
     @JsonProperty("isPaid")
     private boolean isPaid = false;
 
-    @JsonProperty("isDeleted")
-    private boolean isDeleted = false;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate referenceDate;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate spreadStart;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDate spreadEnd;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("isDeleted")
+    private boolean isDeleted = false;
 
     @PrePersist
     protected void onCreate() {

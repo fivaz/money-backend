@@ -1,6 +1,5 @@
 package com.example.money.controller;
 
-import com.example.money.dto.BudgetDTO;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
 import com.example.money.repository.BudgetRepository;
@@ -15,7 +14,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.example.money.service.BudgetService.monthsBetweenInclusive;
 
@@ -37,7 +35,7 @@ public class BudgetController {
     }
 
     @GetMapping("/by-date")
-    public ResponseEntity<List<BudgetDTO>> getByDate(
+    public List<Budget> getByDate(
             @RequestParam int year,
             @RequestParam int month,
             HttpServletRequest request) {
@@ -47,59 +45,50 @@ public class BudgetController {
         LocalDate firstDay = targetMonth.atDay(1);
         LocalDate lastDay = targetMonth.atEndOfMonth();
 
-        List<Budget> budgets = budgetRepository.findBudgetsWithinDateRange(userId, firstDay, lastDay);
+        return budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
+    }
 
-        if (budgets.isEmpty()) return ResponseEntity.ok(List.of());
+    @GetMapping("/{id}/previous-amount")
+    public ResponseEntity<BigDecimal> getPreviousAmount(
+            @PathVariable Long id,
+            @RequestParam int year,
+            @RequestParam int month,
+            HttpServletRequest request) {
 
-        List<Long> budgetIds = budgets.stream().map(Budget::getId).toList();
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        Optional<Budget> optionalBudget = budgetRepository.findById(id);
+        if (optionalBudget.isEmpty()) return ResponseEntity.notFound().build();
+
+        Budget budget = optionalBudget.get();
+        if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         YearMonth previousMonth = YearMonth.of(year, month).minusMonths(1);
-        LocalDate startOfPeriod = budgets.stream()
-                .map(Budget::getStartAt)
-                .filter(Objects::nonNull)
-                .min(LocalDate::compareTo)
-                .orElse(previousMonth.atDay(1));
-
+        LocalDate startOfPeriod = budget.getStartAt() != null
+                ? budget.getStartAt()
+                : previousMonth.atDay(1);
         LocalDate endOfPrev = previousMonth.atEndOfMonth();
 
         List<Object[]> sums = transactionRepository.sumAmountsByBudgetIdsAndPeriod(
-                budgetIds, userId, startOfPeriod, endOfPrev
+                List.of(id), userId, startOfPeriod, endOfPrev
         );
 
-        // map: budgetId → sum
-        Map<Long, BigDecimal> spentMap = sums.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (BigDecimal) row[1]
-                ));
+        BigDecimal spent = sums.stream()
+                .filter(row -> ((Long) row[0]).equals(id))
+                .map(row -> (BigDecimal) row[1])
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
 
-        List<BudgetDTO> result = budgets.stream()
-                .map(b -> {
-                    int months = monthsBetweenInclusive(b.getStartAt(), previousMonth);
-                    BigDecimal allocated = b.getAmount() != null
-                            ? b.getAmount().multiply(BigDecimal.valueOf(months))
-                            : BigDecimal.ZERO;
+        int months = monthsBetweenInclusive(budget.getStartAt(), previousMonth);
+        BigDecimal allocated = budget.getAmount() != null
+                ? budget.getAmount().multiply(BigDecimal.valueOf(months))
+                : BigDecimal.ZERO;
 
-                    BigDecimal spent = spentMap.getOrDefault(b.getId(), BigDecimal.ZERO);
-                    BigDecimal previousAmount = allocated.add(spent);
+        BigDecimal previousAmount = allocated.add(spent);
 
-                    return new BudgetDTO(
-                            b.getId(),
-                            b.getUserId(),
-                            b.getName(),
-                            b.getSortOrder(),
-                            b.getCreatedAt(),
-                            b.getAmount(),
-                            b.getIcon(),
-                            b.getStartAt(),
-                            b.getEndAt(),
-                            b.getParent() != null ? b.getParent().getId() : null,
-                            b.isDeleted(),
-                            previousAmount
-                    );
-                })
-                .toList();
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(previousAmount);
     }
 
     @GetMapping("/{id}/transactions")
