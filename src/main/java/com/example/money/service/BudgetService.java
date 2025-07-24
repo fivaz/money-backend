@@ -71,7 +71,7 @@ public class BudgetService {
         LocalDate calcEnd = targetMonth.minusMonths(1).atEndOfMonth();
 
         BigDecimal previousTransactionsSum = transactionRepository
-                .findByBudgetIdAndDateRange(budget.getId(), calcStart, calcEnd)
+                .findByBudgetIdAndDateRangeWithSpecialCases(budget.getId(), calcStart, calcEnd)
                 .stream()
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

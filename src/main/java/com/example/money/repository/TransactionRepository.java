@@ -16,11 +16,26 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
 
-    @Query(value = "SELECT * FROM transaction t WHERE t.budget_id = :budgetId AND DATE(t.date) >= :startDate AND DATE(t.date) <= :endDate", nativeQuery = true)
-    List<Transaction> findByBudgetIdAndDateRange(
+    @Query("""
+                SELECT t FROM Transaction t
+                WHERE t.budget.id = :budgetId
+                  AND t.isDeleted = false
+                  AND (
+                    COALESCE(t.referenceDate, t.date) BETWEEN :startDate AND :endDate
+                    OR
+                    (
+                      t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endDate
+                      AND t.spreadEnd >= :startDate
+                    )
+                  )
+                ORDER BY t.date DESC
+            """)
+    List<Transaction> findByBudgetIdAndDateRangeWithSpecialCases(
             @Param("budgetId") Long budgetId,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+            @Param("endDate") LocalDate endDate
+    );
 
     //fetch transactions if date match month and year of monthStart, or if month and year of spreadStart and spreadEnd fits between the month and year of monthStart
     @Query("""
@@ -80,30 +95,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("userId") String userId,
             @Param("month") int month,
             @Param("year") int year
-    );
-
-    @Query("""
-            SELECT COALESCE(SUM(t.amount), 0)
-            FROM Transaction t
-              WHERE t.budget.id = :budgetId
-              AND t.userId = :userId
-              AND t.isDeleted = false
-              AND (
-                (
-                  COALESCE(t.referenceDate, t.date) BETWEEN :startDate AND :endDate
-                )
-                OR (
-                  t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                  AND t.spreadEnd >= :startDate
-                  AND t.spreadStart <= :endDate
-                )
-              )
-            """)
-    BigDecimal sumAmountsByBudgetIdsAndPeriod(
-            @Param("budgetId") Long budgetId,
-            @Param("userId") String userId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
     );
 
     @Query("""
