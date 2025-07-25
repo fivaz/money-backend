@@ -133,6 +133,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
                 (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
               )
+            ORDER BY t.date DESC
             """)
     Page<Transaction> searchByDescriptionOrBudgetName(
             @Param("userId") String userId,
