@@ -36,17 +36,39 @@ public class Transaction {
     private Budget budget;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private Account destination;
 
     @JsonProperty("isPaid")
     private boolean isPaid = false;
 
+    @JsonIgnore
     private LocalDate referenceDate;
 
+    @JsonIgnore
     private LocalDate spreadStart;
 
+    @JsonIgnore
     private LocalDate spreadEnd;
+
+    @JsonProperty("referenceDate")
+    public String getReferenceDateAsString() {
+        return referenceDate != null ? referenceDate.toString() : "";
+    }
+
+    @JsonProperty("spreadStart")
+    public String getSpreadStartAsString() {
+        return spreadStart != null ? spreadStart.toString() : "";
+    }
+
+    @JsonProperty("spreadEnd")
+    public String getSpreadEndAsString() {
+        return spreadEnd != null ? spreadEnd.toString() : "";
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")

@@ -98,6 +98,7 @@ public class TransactionController {
         tx.setPaid(updated.isPaid());
         tx.setSpreadStart(updated.getSpreadStart());
         tx.setSpreadEnd(updated.getSpreadEnd());
+        tx.setDestination(updated.getDestination());
 
         // Handle budget update
         if (updated.getBudget() != null && updated.getBudget().getId() != null) {
