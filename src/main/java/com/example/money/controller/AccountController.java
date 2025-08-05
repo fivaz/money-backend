@@ -43,7 +43,7 @@ public class AccountController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        return transactionRepository.findByAccountIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
+        return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
                 id, userId, month, year
         );
     }

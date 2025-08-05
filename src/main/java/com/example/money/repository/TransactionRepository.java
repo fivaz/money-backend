@@ -19,14 +19,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
+                LEFT JOIN FETCH t.destination
                 LEFT JOIN FETCH t.budget
-                WHERE t.account.id = :accountId
+                WHERE (t.account.id = :accountId OR t.destination.id = :accountId)
                   AND t.userId = :userId
                   AND EXTRACT(MONTH FROM t.date) = :month
                   AND EXTRACT(YEAR FROM t.date) = :year
                   AND t.isDeleted = false
             """)
-    List<Transaction> findByAccountIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
+    List<Transaction> findByAccountIdOrDestinationIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
             @Param("accountId") Long accountId,
             @Param("userId") String userId,
             @Param("month") int month,
