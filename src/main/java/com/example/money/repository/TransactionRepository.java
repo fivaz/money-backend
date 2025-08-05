@@ -105,29 +105,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
     @Query("""
-            SELECT t FROM Transaction t
-            LEFT JOIN FETCH t.budget
-            WHERE t.budget.id = :budgetId
-              AND t.userId = :userId
-              AND t.isDeleted = false
-              AND (
-                (
-                  EXTRACT(MONTH FROM COALESCE(t.referenceDate, t.date)) = :month
-                  AND EXTRACT(YEAR FROM COALESCE(t.referenceDate, t.date)) = :year
-                )
-                OR (
-                  t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                  AND (
-                    EXTRACT(YEAR FROM t.spreadStart) < :year OR
-                    (EXTRACT(YEAR FROM t.spreadStart) = :year AND EXTRACT(MONTH FROM t.spreadStart) <= :month)
-                  )
-                  AND (
-                    EXTRACT(YEAR FROM t.spreadEnd) > :year OR
-                    (EXTRACT(YEAR FROM t.spreadEnd) = :year AND EXTRACT(MONTH FROM t.spreadEnd) >= :month)
-                  )
-                )
-              )
-            ORDER BY t.date DESC
+             SELECT t FROM Transaction t
+            JOIN FETCH t.account
+             LEFT JOIN FETCH t.budget
+             WHERE t.budget.id = :budgetId
+               AND t.userId = :userId
+               AND t.isDeleted = false
+               AND (
+                 (
+                   EXTRACT(MONTH FROM COALESCE(t.referenceDate, t.date)) = :month
+                   AND EXTRACT(YEAR FROM COALESCE(t.referenceDate, t.date)) = :year
+                 )
+                 OR (
+                   t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                   AND (
+                     EXTRACT(YEAR FROM t.spreadStart) < :year OR
+                     (EXTRACT(YEAR FROM t.spreadStart) = :year AND EXTRACT(MONTH FROM t.spreadStart) <= :month)
+                   )
+                   AND (
+                     EXTRACT(YEAR FROM t.spreadEnd) > :year OR
+                     (EXTRACT(YEAR FROM t.spreadEnd) = :year AND EXTRACT(MONTH FROM t.spreadEnd) >= :month)
+                   )
+                 )
+               )
+             ORDER BY t.date DESC
             """)
     List<Transaction> findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
             @Param("budgetId") Long budgetId,
@@ -152,11 +153,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
     @Query("""
-            SELECT COALESCE(SUM(t.amount), 0)
-            FROM Transaction t
-            WHERE t.userId = :userId
-              AND t.isDeleted = false
-              AND t.isPaid = true
+                SELECT COALESCE(SUM(t.amount), 0)
+                FROM Transaction t
+                WHERE t.userId = :userId
+                  AND t.isDeleted = false
+                  AND t.isPaid = true
+                  AND t.destination IS NULL
             """)
     BigDecimal calculateBalance(@Param("userId") String userId);
 
