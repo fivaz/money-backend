@@ -35,6 +35,10 @@ public class Transaction {
     @JoinColumn(name = "budget_id")
     private Budget budget;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
     @JsonProperty("isPaid")
     private boolean isPaid = false;
 

@@ -14,6 +14,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+    /*New*/
+    @Query("""
+                SELECT t FROM Transaction t
+                JOIN FETCH t.account
+                LEFT JOIN FETCH t.budget
+                WHERE t.account.id = :accountId
+                  AND t.userId = :userId
+                  AND EXTRACT(MONTH FROM t.date) = :month
+                  AND EXTRACT(YEAR FROM t.date) = :year
+                  AND t.isDeleted = false
+            """)
+    List<Transaction> findByAccountIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
+            @Param("accountId") Long accountId,
+            @Param("userId") String userId,
+            @Param("month") int month,
+            @Param("year") int year
+    );
+
+    /*Old*/
+
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
 
     @Query("""
