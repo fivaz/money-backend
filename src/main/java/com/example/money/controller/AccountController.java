@@ -10,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,17 +37,41 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/transactions")
-    public List<Transaction> getTransactionsByAccountAndMonth(
-            @PathVariable Long id,
-            @RequestParam int year,
-            @RequestParam int month,
-            HttpServletRequest request
+    public List<Transaction> getTransactionsByAccountAndMonth(@PathVariable Long id,
+                                                              @RequestParam int year,
+                                                              @RequestParam int month,
+                                                              HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
                 id, userId, month, year
         );
+    }
+
+    @GetMapping("/{id}/balance")
+    public BigDecimal getBalance(@PathVariable Long id,
+                                        @RequestParam int year,
+                                        @RequestParam int month,
+                                        HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate lastDay = yearMonth.atEndOfMonth();
+        LocalDateTime endOfMonth = lastDay.atTime(23, 59, 59);
+
+        List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
+                id, userId, endOfMonth
+        );
+
+        return transactions.stream()
+                .map(t -> {
+                    boolean isIncomingTransfer = t.getDestination() != null
+                            && t.getDestination().getId().equals(id);
+                    BigDecimal amount = t.getAmount();
+                    return isIncomingTransfer ? amount.abs() : amount;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @PostMapping

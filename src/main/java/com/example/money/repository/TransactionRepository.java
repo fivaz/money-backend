@@ -34,6 +34,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("year") int year
     );
 
+    @Query("""
+                SELECT t FROM Transaction t
+                JOIN FETCH t.account
+                LEFT JOIN FETCH t.destination
+                LEFT JOIN FETCH t.budget
+                WHERE (t.account.id = :accountId OR t.destination.id = :accountId)
+                  AND t.userId = :userId
+                  AND t.date <= :endOfMonth
+                  AND t.isPaid = true
+                  AND t.isDeleted = false
+            """)
+    List<Transaction> findUpToMonthAndYearPaidTransactions(
+            @Param("accountId") Long accountId,
+            @Param("userId") String userId,
+            @Param("endOfMonth") LocalDateTime endOfMonth
+    );
+
     /*Old*/
 
     List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
