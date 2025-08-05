@@ -166,6 +166,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("""
             SELECT t FROM Transaction t
             LEFT JOIN FETCH t.budget
+            LEFT JOIN FETCH t.account
             WHERE t.userId = :userId
               AND t.isDeleted = false
               AND (
