@@ -123,7 +123,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
-
+    // sum of paid transactions
     @Query("""
                 SELECT COALESCE(SUM(t.amount), 0)
                 FROM Transaction t
@@ -136,11 +136,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             """)
     BigDecimal calculateBalance(@Param("userId") String userId);
 
+    // sum of paid budgeted transactions in a given period (month)
     @Query("""
                 SELECT COALESCE(SUM(t.amount), 0)
                 FROM Transaction t
                 WHERE t.userId = :userId
                   AND t.isDeleted = false
+                  AND t.isPaid = true
                   AND t.budget IS NOT NULL
                   AND (
                     (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
