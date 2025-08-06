@@ -4,6 +4,7 @@ import com.example.money.entity.Account;
 import com.example.money.entity.Transaction;
 import com.example.money.repository.AccountRepository;
 import com.example.money.repository.TransactionRepository;
+import com.example.money.service.AccountService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +29,8 @@ public class AccountController {
     private final AccountRepository accountRepository;
 
     private final TransactionRepository transactionRepository;
+
+    private final AccountService accountService;
 
     @GetMapping
     public ResponseEntity<List<Account>> getAll(HttpServletRequest request) {
@@ -51,27 +55,19 @@ public class AccountController {
 
     @GetMapping("/{id}/balance")
     public BigDecimal getBalance(@PathVariable Long id,
-                                        @RequestParam int year,
-                                        @RequestParam int month,
-                                        HttpServletRequest request) {
+                                 @RequestParam int year,
+                                 @RequestParam int month,
+                                 HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate lastDay = yearMonth.atEndOfMonth();
-        LocalDateTime endOfMonth = lastDay.atTime(23, 59, 59);
+        LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
         List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
                 id, userId, endOfMonth
         );
 
-        return transactions.stream()
-                .map(t -> {
-                    boolean isIncomingTransfer = t.getDestination() != null
-                            && t.getDestination().getId().equals(id);
-                    BigDecimal amount = t.getAmount();
-                    return isIncomingTransfer ? amount.abs() : amount;
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return accountService.calculateBalance(transactions, id, endOfMonth);
     }
 
     @PostMapping

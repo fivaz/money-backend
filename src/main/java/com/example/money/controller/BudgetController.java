@@ -12,14 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.example.money.service.BudgetService.getDTO;
-import static com.example.money.service.BudgetService.monthsBetweenInclusive;
 
 @RestController
 @RequestMapping("/budgets")
@@ -32,13 +28,13 @@ public class BudgetController {
 
     private final BudgetService budgetService;
 
-    @GetMapping
-    public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
-        String userId = (String) request.getAttribute("firebaseUid");
-        List<Budget> budgets = budgetRepository.findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(userId);
-
-        return ResponseEntity.ok(budgets);
-    }
+//    @GetMapping
+//    public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
+//        String userId = (String) request.getAttribute("firebaseUid");
+//        List<Budget> budgets = budgetRepository.findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(userId);
+//
+//        return ResponseEntity.ok(budgets);
+//    }
 
     @GetMapping("/by-date")
     public List<Budget> getByDate(
