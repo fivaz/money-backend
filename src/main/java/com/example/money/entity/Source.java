@@ -21,17 +21,19 @@ public class Source {
     @Column(nullable = false)
     private String userId;
 
+
     private String name;
 
     private int sortOrder;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @Column(precision = 19, scale = 4)
     private BigDecimal balance;
 
     private String icon;
+
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")

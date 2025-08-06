@@ -22,14 +22,16 @@ public class Account {
     @Column(nullable = false)
     private String userId;
 
+
     private String name;
 
     private int sortOrder;
 
+    private String icon;
+
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    private String icon;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")

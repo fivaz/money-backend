@@ -14,12 +14,11 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/accounts")
@@ -44,17 +43,26 @@ public class AccountController {
     public List<Transaction> getTransactionsByAccountAndMonth(@PathVariable Long id,
                                                               @RequestParam int year,
                                                               @RequestParam int month,
-                                                              HttpServletRequest request
-    ) {
+                                                              HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         YearMonth ym = YearMonth.of(year, month);
         LocalDate startOfMonth = ym.atDay(1);
         LocalDate endOfMonth = ym.atEndOfMonth();
 
-        return transactionRepository
-                .findByAccountIdOrDestinationIdAndUserIdAndDateRange(id, userId, startOfMonth, endOfMonth);
+        LocalDateTime startOfMonthDateTime = startOfMonth.atStartOfDay();
+        LocalDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX); // 23:59:59.999999999
+
+        return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
+                id,
+                userId,
+                startOfMonth,
+                endOfMonth,
+                startOfMonthDateTime,
+                endOfMonthDateTime
+        );
     }
+
 
     @GetMapping("/{id}/balance")
     public BigDecimal getBalance(@PathVariable Long id,

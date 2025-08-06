@@ -23,10 +23,8 @@ public class Transaction {
     @Column(nullable = false)
     private String userId;
 
-    private String description;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private String description;
 
     @Column(precision = 19, scale = 4, nullable = false)
     private BigDecimal amount;
@@ -61,6 +59,10 @@ public class Transaction {
     @JsonSerialize(nullsUsing = EmptyStringSerializer.class)
     @JsonDeserialize(using = StringToLocalDateDeserializer.class)
     private LocalDate spreadEnd;
+
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")

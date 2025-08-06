@@ -16,6 +16,8 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     /*New*/
+
+    //    find transactions of an account in a given month
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
@@ -26,23 +28,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.isDeleted = false
                   AND (
                       (t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                          AND t.spreadStart <= :endOfMonth
-                          AND t.spreadEnd >= :startOfMonth
+                          AND t.spreadStart <= :endOfMonthDate
+                          AND t.spreadEnd >= :startOfMonthDate
                       )
                       OR
                       (
                           (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                          AND t.date BETWEEN :startOfMonth AND :endOfMonth
+                          AND t.date BETWEEN :startOfMonthDateTime AND :endOfMonthDateTime
                       )
                   )
             """)
     List<Transaction> findByAccountIdOrDestinationIdAndUserIdAndDateRange(
             @Param("accountId") Long accountId,
             @Param("userId") String userId,
-            @Param("startOfMonth") LocalDate startOfMonth,
-            @Param("endOfMonth") LocalDate endOfMonth
+            @Param("startOfMonthDate") LocalDate startOfMonthDate,
+            @Param("endOfMonthDate") LocalDate endOfMonthDate,
+            @Param("startOfMonthDateTime") LocalDateTime startOfMonthDateTime,
+            @Param("endOfMonthDateTime") LocalDateTime endOfMonthDateTime
     );
 
+
+    //    find transactions of an account from the beginning up to a given month
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
@@ -65,6 +71,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("endOfMonthDate") LocalDate endOfMonthDate
     );
 
+    //    search by description or budget name
     @Query("""
             SELECT t FROM Transaction t
             LEFT JOIN FETCH t.budget
@@ -85,7 +92,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
+
+
     /*Old*/
+
+
 
     @Query("""
                 SELECT t FROM Transaction t

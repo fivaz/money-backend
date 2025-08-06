@@ -22,12 +22,11 @@ public class Budget {
     @Column(nullable = false)
     private String userId;
 
+
+
     private String name;
 
     private int sortOrder;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @Column(precision = 19, scale = 4)
     private BigDecimal amount;
@@ -45,6 +44,11 @@ public class Budget {
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Budget parent;
+
+
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")
