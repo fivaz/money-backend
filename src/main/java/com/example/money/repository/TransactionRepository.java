@@ -23,15 +23,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 LEFT JOIN FETCH t.budget
                 WHERE (t.account.id = :accountId OR t.destination.id = :accountId)
                   AND t.userId = :userId
-                  AND EXTRACT(MONTH FROM t.date) = :month
-                  AND EXTRACT(YEAR FROM t.date) = :year
                   AND t.isDeleted = false
+                  AND (
+                      t.date BETWEEN :startOfMonth AND :endOfMonth
+                      OR (
+                          t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                          AND t.spreadStart <= :endOfMonth
+                          AND t.spreadEnd >= :startOfMonth
+                      )
+                  )
             """)
-    List<Transaction> findByAccountIdOrDestinationIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
+    List<Transaction> findByAccountIdOrDestinationIdAndUserIdAndDateRange(
             @Param("accountId") Long accountId,
             @Param("userId") String userId,
-            @Param("month") int month,
-            @Param("year") int year
+            @Param("startOfMonth") LocalDate startOfMonth,
+            @Param("endOfMonth") LocalDate endOfMonth
     );
 
     @Query("""
@@ -41,14 +47,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 LEFT JOIN FETCH t.budget
                 WHERE (t.account.id = :accountId OR t.destination.id = :accountId)
                   AND t.userId = :userId
-                  AND t.date <= :endOfMonth
                   AND t.isPaid = true
                   AND t.isDeleted = false
+                  AND (
+                      t.date <= :endOfMonthDateTime
+                      OR (t.spreadStart IS NOT NULL AND t.spreadStart <= :endOfMonthDate)
+                  )
             """)
     List<Transaction> findUpToMonthAndYearPaidTransactions(
             @Param("accountId") Long accountId,
             @Param("userId") String userId,
-            @Param("endOfMonth") LocalDateTime endOfMonth
+            @Param("endOfMonthDateTime") LocalDateTime endOfMonthDateTime,
+            @Param("endOfMonthDate") LocalDate endOfMonthDate
     );
 
     /*Old*/

@@ -48,9 +48,12 @@ public class AccountController {
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndMonthAndYearAndIsDeletedFalse(
-                id, userId, month, year
-        );
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate startOfMonth = ym.atDay(1);
+        LocalDate endOfMonth = ym.atEndOfMonth();
+
+        return transactionRepository
+                .findByAccountIdOrDestinationIdAndUserIdAndDateRange(id, userId, startOfMonth, endOfMonth);
     }
 
     @GetMapping("/{id}/balance")
@@ -60,14 +63,15 @@ public class AccountController {
                                  HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate endOfMonthDate = ym.atEndOfMonth();
+        LocalDateTime endOfMonthDateTime = endOfMonthDate.atTime(23, 59, 59);
 
         List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
-                id, userId, endOfMonth
+                id, userId, endOfMonthDateTime, endOfMonthDate
         );
 
-        return accountService.calculateBalance(transactions, id, endOfMonth);
+        return accountService.calculateBalance(transactions, id, endOfMonthDateTime);
     }
 
     @PostMapping
