@@ -1,5 +1,9 @@
 package com.example.money.entity;
+import com.example.money.json.EmptyStringSerializer;
+import com.example.money.json.StringToLocalDateDeserializer;
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -46,29 +50,17 @@ public class Transaction {
     @JsonProperty("isPaid")
     private boolean isPaid = false;
 
-    @JsonIgnore
+    @JsonSerialize(nullsUsing = EmptyStringSerializer.class)
+    @JsonDeserialize(using = StringToLocalDateDeserializer.class)
     private LocalDate referenceDate;
 
-    @JsonIgnore
+    @JsonSerialize(nullsUsing = EmptyStringSerializer.class)
+    @JsonDeserialize(using = StringToLocalDateDeserializer.class)
     private LocalDate spreadStart;
 
-    @JsonIgnore
+    @JsonSerialize(nullsUsing = EmptyStringSerializer.class)
+    @JsonDeserialize(using = StringToLocalDateDeserializer.class)
     private LocalDate spreadEnd;
-
-    @JsonProperty("referenceDate")
-    public String getReferenceDateAsString() {
-        return referenceDate != null ? referenceDate.toString() : "";
-    }
-
-    @JsonProperty("spreadStart")
-    public String getSpreadStartAsString() {
-        return spreadStart != null ? spreadStart.toString() : "";
-    }
-
-    @JsonProperty("spreadEnd")
-    public String getSpreadEndAsString() {
-        return spreadEnd != null ? spreadEnd.toString() : "";
-    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isDeleted")
