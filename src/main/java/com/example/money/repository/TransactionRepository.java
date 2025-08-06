@@ -25,11 +25,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.userId = :userId
                   AND t.isDeleted = false
                   AND (
-                      t.date BETWEEN :startOfMonth AND :endOfMonth
-                      OR (
-                          t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      (t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
                           AND t.spreadStart <= :endOfMonth
                           AND t.spreadEnd >= :startOfMonth
+                      )
+                      OR
+                      (
+                          (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                          AND t.date BETWEEN :startOfMonth AND :endOfMonth
                       )
                   )
             """)
@@ -50,8 +53,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.isPaid = true
                   AND t.isDeleted = false
                   AND (
-                      t.date <= :endOfMonthDateTime
-                      OR (t.spreadStart IS NOT NULL AND t.spreadStart <= :endOfMonthDate)
+                      (t.spreadStart IS NOT NULL AND t.spreadStart <= :endOfMonthDate)
+                      OR
+                      (t.spreadStart IS NULL AND t.date <= :endOfMonthDateTime)
                   )
             """)
     List<Transaction> findUpToMonthAndYearPaidTransactions(
@@ -61,9 +65,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("endOfMonthDate") LocalDate endOfMonthDate
     );
 
-    /*Old*/
+    @Query("""
+            SELECT t FROM Transaction t
+            LEFT JOIN FETCH t.budget
+            LEFT JOIN FETCH t.account
+            WHERE t.userId = :userId
+              AND t.isDeleted = false
+              AND (
+                :query IS NULL OR
+                :query = '' OR
+                LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
+              )
+            ORDER BY t.date DESC
+            """)
+    Page<Transaction> searchByDescriptionOrBudgetName(
+            @Param("userId") String userId,
+            @Param("query") String query,
+            Pageable pageable
+    );
 
-    List<Transaction> findByUserIdAndIsDeletedFalse(String userId);
+    /*Old*/
 
     @Query("""
                 SELECT t FROM Transaction t
@@ -86,33 +108,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("endDate") LocalDate endDate
     );
 
-    //fetch transactions if date match month and year of monthStart, or if month and year of spreadStart and spreadEnd fits between the month and year of monthStart
-    @Query("""
-                SELECT t FROM Transaction t
-                LEFT JOIN FETCH t.budget
-                WHERE t.userId = :userId
-                  AND t.isDeleted = false
-                  AND (
-                    (EXTRACT(YEAR FROM t.date) = :year AND EXTRACT(MONTH FROM t.date) = :month)
-                    OR (
-                      t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND (
-                        EXTRACT(YEAR FROM t.spreadStart) < :year OR
-                        (EXTRACT(YEAR FROM t.spreadStart) = :year AND EXTRACT(MONTH FROM t.spreadStart) <= :month)
-                      )
-                      AND (
-                        EXTRACT(YEAR FROM t.spreadEnd) > :year OR
-                        (EXTRACT(YEAR FROM t.spreadEnd) = :year AND EXTRACT(MONTH FROM t.spreadEnd) >= :month)
-                      )
-                    )
-                  )
-                ORDER BY t.date DESC
-            """)
-    List<Transaction> findByUserIdAndMonthAndYearAndIsDeletedFalseWithBudgetOrderByDateDesc(
-            @Param("userId") String userId,
-            @Param("month") int month,
-            @Param("year") int year
-    );
 
     @Query("""
              SELECT t FROM Transaction t
@@ -172,26 +167,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             """)
     BigDecimal calculateBalance(@Param("userId") String userId);
 
-
-    @Query("""
-            SELECT t FROM Transaction t
-            LEFT JOIN FETCH t.budget
-            LEFT JOIN FETCH t.account
-            WHERE t.userId = :userId
-              AND t.isDeleted = false
-              AND (
-                :query IS NULL OR
-                :query = '' OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR
-                (t.budget IS NOT NULL AND LOWER(t.budget.name) LIKE LOWER(CONCAT('%', :query, '%')))
-              )
-            ORDER BY t.date DESC
-            """)
-    Page<Transaction> searchByDescriptionOrBudgetName(
-            @Param("userId") String userId,
-            @Param("query") String query,
-            Pageable pageable
-    );
 
     @Query(value = """
             SELECT TO_CHAR(t.date, 'YYYY-MM') AS time, ABS(SUM(t.amount)) AS total

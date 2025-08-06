@@ -28,14 +28,6 @@ public class BudgetController {
 
     private final BudgetService budgetService;
 
-//    @GetMapping
-//    public ResponseEntity<List<Budget>> getAll(HttpServletRequest request) {
-//        String userId = (String) request.getAttribute("firebaseUid");
-//        List<Budget> budgets = budgetRepository.findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(userId);
-//
-//        return ResponseEntity.ok(budgets);
-//    }
-
     @GetMapping("/by-date")
     public List<Budget> getByDate(
             @RequestParam int year,

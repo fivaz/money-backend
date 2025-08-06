@@ -7,9 +7,10 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
-    List<Budget> findByUserIdAndIsDeletedFalseOrderBySortOrderAsc(String userId);
+    Optional<Budget> findByIdAndUserIdAndIsDeletedFalse(Long id, String userId);
 
     @Query("""
             SELECT b FROM Budget b
