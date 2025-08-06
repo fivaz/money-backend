@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 
@@ -63,20 +65,23 @@ public class BudgetService {
             return BigDecimal.ZERO;
         }
 
-        LocalDate calcStart = budget.getStartAt();
-        if (calcStart == null || !YearMonth.from(calcStart).isBefore(targetMonth)) {
+        LocalDate startDate = budget.getStartAt();
+        if (startDate == null || !YearMonth.from(startDate).isBefore(targetMonth)) {
             return BigDecimal.ZERO;
         }
 
-        LocalDate calcEnd = targetMonth.minusMonths(1).atEndOfMonth();
+        LocalDate endDate = targetMonth.minusMonths(1).atEndOfMonth();
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
 
         BigDecimal previousTransactionsSum = transactionRepository
-                .findByBudgetIdAndDateRangeWithSpecialCases(budget.getId(), calcStart, calcEnd)
+                .findByBudgetIdAndDateInRange(budget.getId(), startDate, endDate, startDateTime, endDateTime)
                 .stream()
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int monthsBetween = monthsBetweenInclusive(calcStart, targetMonth);
+        int monthsBetween = monthsBetweenInclusive(startDate, targetMonth);
 
         return budget.getAmount()
                 .multiply(BigDecimal.valueOf(monthsBetween))

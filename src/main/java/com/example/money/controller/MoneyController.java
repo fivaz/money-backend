@@ -45,6 +45,6 @@ public class MoneyController {
         LocalDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX);
 
 
-        return transactionRepository.calculateBudgetedAmountByMonthAndYear(userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
+        return transactionRepository.calculateBudgetedAmountInDateRange(userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
     }
 }

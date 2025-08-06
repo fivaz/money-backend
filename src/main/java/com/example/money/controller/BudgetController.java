@@ -79,7 +79,7 @@ public class BudgetController {
         LocalDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX);
 
         return transactionRepository
-                .findByBudgetIdAndUserIdAndDateRangeWithBudget(
+                .findByBudgetIdAndUserIdAndDateRange(
                         id,
                         userId,
                         startOfMonth,

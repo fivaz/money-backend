@@ -15,8 +15,6 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    /*New*/
-
     //    find transactions of an account in a given month (based on spread -> date)
     @Query("""
                 SELECT t FROM Transaction t
@@ -93,7 +91,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
-    // find transactions of a budget for a given month (based on spread -> reference -> date)
+    // find transactions (+budget, +accounts) of a budget for a given month (based on spread -> reference -> date)
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
@@ -102,30 +100,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.userId = :userId
                   AND t.isDeleted = false
                   AND (
-                    (
-                      t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND t.spreadStart <= :endOfMonth
-                      AND t.spreadEnd >= :startOfMonth
+                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
+                    OR (
+                      t.referenceDate IS NULL
+                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endDate
+                      AND t.spreadEnd >= :startDate
                     )
                     OR (
-                      (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                      AND (
-                        COALESCE(t.referenceDate, NULL) BETWEEN :startOfMonth AND :endOfMonth
-                        OR (
-                          t.referenceDate IS NULL
-                          AND t.date BETWEEN :startOfMonthTime AND :endOfMonthTime
-                        )
-                      )
+                      t.referenceDate IS NULL
+                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                      AND t.date BETWEEN :startDateTime AND :endDateTime
                     )
                   )
             """)
-    List<Transaction> findByBudgetIdAndUserIdAndDateRangeWithBudget(
+    List<Transaction> findByBudgetIdAndUserIdAndDateRange(
             @Param("budgetId") Long budgetId,
             @Param("userId") String userId,
-            @Param("startOfMonth") LocalDate startOfMonth,
-            @Param("endOfMonth") LocalDate endOfMonth,
-            @Param("startOfMonthTime") LocalDateTime startOfMonthTime,
-            @Param("endOfMonthTime") LocalDateTime endOfMonthTime
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
     );
 
     @Query("""
@@ -147,30 +142,57 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                   AND t.isDeleted = false
                   AND t.budget IS NOT NULL
                   AND (
-                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startOfMonth AND :endOfMonth)
+                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
                     OR (
                       t.referenceDate IS NULL
                       AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND t.spreadStart <= :endOfMonth
-                      AND t.spreadEnd >= :startOfMonth
+                      AND t.spreadStart <= :endDate
+                      AND t.spreadEnd >= :startDate
                     )
                     OR (
                       t.referenceDate IS NULL
                       AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                      AND t.date BETWEEN :startOfMonthTime AND :endOfMonthTime
+                      AND t.date BETWEEN :startDateTime AND :endDateTime
                     )
                   )
             """)
-    BigDecimal calculateBudgetedAmountByMonthAndYear(
+    BigDecimal calculateBudgetedAmountInDateRange(
             @Param("userId") String userId,
-            @Param("startOfMonth") LocalDate startOfMonth,
-            @Param("endOfMonth") LocalDate endOfMonth,
-            @Param("startOfMonthTime") LocalDateTime startOfMonthTime,
-            @Param("endOfMonthTime") LocalDateTime endOfMonthTime
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    // find transactions of a budget in a given period based on (referenceDate -> spread -> date)
+    @Query("""
+                SELECT t FROM Transaction t
+                WHERE t.budget.id = :budgetId
+                  AND t.isDeleted = false
+                  AND (
+                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
+                    OR (
+                      t.referenceDate IS NULL
+                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endDate
+                      AND t.spreadEnd >= :startDate
+                    )
+                    OR (
+                      t.referenceDate IS NULL
+                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                      AND t.date BETWEEN :startDateTime AND :endDateTime
+                    )
+                  )
+            """)
+    List<Transaction> findByBudgetIdAndDateInRange(
+            @Param("budgetId") Long budgetId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
     );
 
     /*Old*/
-
 
     @Query(value = """
             SELECT TO_CHAR(t.date, 'YYYY-MM') AS time, ABS(SUM(t.amount)) AS total
@@ -180,25 +202,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             ORDER BY TO_CHAR(t.date, 'YYYY-MM') ASC
             """, nativeQuery = true)
     List<MonthlyExpenseSummary> findMonthlyExpenseSummary(@Param("userId") String userId);
-
-    @Query("""
-                SELECT t FROM Transaction t
-                WHERE t.budget.id = :budgetId
-                  AND t.isDeleted = false
-                  AND (
-                    COALESCE(t.referenceDate, t.date) BETWEEN :startDate AND :endDate
-                    OR
-                    (
-                      t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND t.spreadStart <= :endDate
-                      AND t.spreadEnd >= :startDate
-                    )
-                  )
-                ORDER BY t.date DESC
-            """)
-    List<Transaction> findByBudgetIdAndDateRangeWithSpecialCases(
-            @Param("budgetId") Long budgetId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
-    );
 }
