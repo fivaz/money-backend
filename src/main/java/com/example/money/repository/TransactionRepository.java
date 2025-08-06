@@ -45,6 +45,39 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("endOfMonthDateTime") LocalDateTime endOfMonthDateTime
     );
 
+    // find transactions (+budget, +accounts) of a budget for a given month (based on spread -> reference -> date)
+    @Query("""
+                SELECT t FROM Transaction t
+                JOIN FETCH t.account
+                LEFT JOIN FETCH t.destination
+                LEFT JOIN FETCH t.budget
+                WHERE t.budget.id = :budgetId
+                  AND t.userId = :userId
+                  AND t.isDeleted = false
+                  AND (
+                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
+                    OR (
+                      t.referenceDate IS NULL
+                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endDate
+                      AND t.spreadEnd >= :startDate
+                    )
+                    OR (
+                      t.referenceDate IS NULL
+                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                      AND t.date BETWEEN :startDateTime AND :endDateTime
+                    )
+                  )
+            """)
+    List<Transaction> findByBudgetIdAndUserIdAndDateRange(
+            @Param("budgetId") Long budgetId,
+            @Param("userId") String userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
 
     //    find transactions of an account from the beginning up to a given month (based on spread -> date)
     @Query("""
@@ -90,38 +123,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
-
-    // find transactions (+budget, +accounts) of a budget for a given month (based on spread -> reference -> date)
-    @Query("""
-                SELECT t FROM Transaction t
-                JOIN FETCH t.account
-                LEFT JOIN FETCH t.budget
-                WHERE t.budget.id = :budgetId
-                  AND t.userId = :userId
-                  AND t.isDeleted = false
-                  AND (
-                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
-                    OR (
-                      t.referenceDate IS NULL
-                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND t.spreadStart <= :endDate
-                      AND t.spreadEnd >= :startDate
-                    )
-                    OR (
-                      t.referenceDate IS NULL
-                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                      AND t.date BETWEEN :startDateTime AND :endDateTime
-                    )
-                  )
-            """)
-    List<Transaction> findByBudgetIdAndUserIdAndDateRange(
-            @Param("budgetId") Long budgetId,
-            @Param("userId") String userId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDateTime") LocalDateTime endDateTime
-    );
 
     @Query("""
                 SELECT COALESCE(SUM(t.amount), 0)

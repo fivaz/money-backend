@@ -51,7 +51,7 @@ public class AccountController {
         LocalDate endOfMonth = ym.atEndOfMonth();
 
         LocalDateTime startOfMonthDateTime = startOfMonth.atStartOfDay();
-        LocalDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX); // 23:59:59.999999999
+        LocalDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX);
 
         return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
                 id,
