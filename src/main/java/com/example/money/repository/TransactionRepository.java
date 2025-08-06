@@ -17,7 +17,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     /*New*/
 
-    //    find transactions of an account in a given month
+    //    find transactions of an account in a given month (based on spread -> date)
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
@@ -48,7 +48,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
-    //    find transactions of an account from the beginning up to a given month
+    //    find transactions of an account from the beginning up to a given month (based on spread -> date)
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account
@@ -93,10 +93,93 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
+    // find transactions of a budget for a given month (based on spread -> reference -> date)
+    @Query("""
+                SELECT t FROM Transaction t
+                JOIN FETCH t.account
+                LEFT JOIN FETCH t.budget
+                WHERE t.budget.id = :budgetId
+                  AND t.userId = :userId
+                  AND t.isDeleted = false
+                  AND (
+                    (
+                      t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endOfMonth
+                      AND t.spreadEnd >= :startOfMonth
+                    )
+                    OR (
+                      (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                      AND (
+                        COALESCE(t.referenceDate, NULL) BETWEEN :startOfMonth AND :endOfMonth
+                        OR (
+                          t.referenceDate IS NULL
+                          AND t.date BETWEEN :startOfMonthTime AND :endOfMonthTime
+                        )
+                      )
+                    )
+                  )
+            """)
+    List<Transaction> findByBudgetIdAndUserIdAndDateRangeWithBudget(
+            @Param("budgetId") Long budgetId,
+            @Param("userId") String userId,
+            @Param("startOfMonth") LocalDate startOfMonth,
+            @Param("endOfMonth") LocalDate endOfMonth,
+            @Param("startOfMonthTime") LocalDateTime startOfMonthTime,
+            @Param("endOfMonthTime") LocalDateTime endOfMonthTime
+    );
+
+    @Query("""
+                SELECT COALESCE(SUM(t.amount), 0)
+                FROM Transaction t
+                JOIN t.account a
+                WHERE t.userId = :userId
+                  AND t.isDeleted = false
+                  AND t.isPaid = true
+                  AND t.destination IS NULL
+                  AND a.isDeleted = false
+            """)
+    BigDecimal calculateBalance(@Param("userId") String userId);
+
+    @Query("""
+                SELECT COALESCE(SUM(t.amount), 0)
+                FROM Transaction t
+                WHERE t.userId = :userId
+                  AND t.isDeleted = false
+                  AND t.budget IS NOT NULL
+                  AND (
+                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startOfMonth AND :endOfMonth)
+                    OR (
+                      t.referenceDate IS NULL
+                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                      AND t.spreadStart <= :endOfMonth
+                      AND t.spreadEnd >= :startOfMonth
+                    )
+                    OR (
+                      t.referenceDate IS NULL
+                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                      AND t.date BETWEEN :startOfMonthTime AND :endOfMonthTime
+                    )
+                  )
+            """)
+    BigDecimal calculateBudgetedAmountByMonthAndYear(
+            @Param("userId") String userId,
+            @Param("startOfMonth") LocalDate startOfMonth,
+            @Param("endOfMonth") LocalDate endOfMonth,
+            @Param("startOfMonthTime") LocalDateTime startOfMonthTime,
+            @Param("endOfMonthTime") LocalDateTime endOfMonthTime
+    );
 
     /*Old*/
 
 
+    @Query(value = """
+            SELECT TO_CHAR(t.date, 'YYYY-MM') AS time, ABS(SUM(t.amount)) AS total
+            FROM transaction t
+            WHERE t.amount < 0 AND t.user_id = :userId
+            GROUP BY TO_CHAR(t.date, 'YYYY-MM')
+            ORDER BY TO_CHAR(t.date, 'YYYY-MM') ASC
+            """, nativeQuery = true)
+    List<MonthlyExpenseSummary> findMonthlyExpenseSummary(@Param("userId") String userId);
 
     @Query("""
                 SELECT t FROM Transaction t
@@ -118,73 +201,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
-
-
-    @Query("""
-             SELECT t FROM Transaction t
-            JOIN FETCH t.account
-             LEFT JOIN FETCH t.budget
-             WHERE t.budget.id = :budgetId
-               AND t.userId = :userId
-               AND t.isDeleted = false
-               AND (
-                 (
-                   EXTRACT(MONTH FROM COALESCE(t.referenceDate, t.date)) = :month
-                   AND EXTRACT(YEAR FROM COALESCE(t.referenceDate, t.date)) = :year
-                 )
-                 OR (
-                   t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                   AND (
-                     EXTRACT(YEAR FROM t.spreadStart) < :year OR
-                     (EXTRACT(YEAR FROM t.spreadStart) = :year AND EXTRACT(MONTH FROM t.spreadStart) <= :month)
-                   )
-                   AND (
-                     EXTRACT(YEAR FROM t.spreadEnd) > :year OR
-                     (EXTRACT(YEAR FROM t.spreadEnd) = :year AND EXTRACT(MONTH FROM t.spreadEnd) >= :month)
-                   )
-                 )
-               )
-             ORDER BY t.date DESC
-            """)
-    List<Transaction> findByBudgetIdAndUserIdAndMonthAndYearAndIsDeletedFalseWithBudget(
-            @Param("budgetId") Long budgetId,
-            @Param("userId") String userId,
-            @Param("month") int month,
-            @Param("year") int year
-    );
-
-    @Query("""
-            SELECT COALESCE(SUM(t.amount), 0)
-            FROM Transaction t
-            WHERE t.userId = :userId
-              AND t.isDeleted = false
-              AND t.budget IS NOT NULL
-              AND EXTRACT(MONTH FROM COALESCE(t.referenceDate, t.date)) = :month
-              AND EXTRACT(YEAR FROM COALESCE(t.referenceDate, t.date)) = :year
-            """)
-    BigDecimal calculateBudgetedAmountByMonthAndYear(
-            @Param("userId") String userId,
-            @Param("month") int month,
-            @Param("year") int year
-    );
-
-    @Query("""
-                SELECT COALESCE(SUM(t.amount), 0)
-                FROM Transaction t
-                WHERE t.userId = :userId
-                  AND t.isDeleted = false
-                  AND t.isPaid = true
-                  AND t.destination IS NULL
-            """)
-    BigDecimal calculateBalance(@Param("userId") String userId);
-
-
-    @Query(value = """
-            SELECT TO_CHAR(t.date, 'YYYY-MM') AS time, ABS(SUM(t.amount)) AS total
-            FROM transaction t
-            WHERE t.amount < 0 AND t.user_id = :userId
-            GROUP BY TO_CHAR(t.date, 'YYYY-MM')
-            ORDER BY TO_CHAR(t.date, 'YYYY-MM') ASC
-            """, nativeQuery = true)
-    List<MonthlyExpenseSummary> findMonthlyExpenseSummary(@Param("userId") String userId);
 }

@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 
 @RestController
 public class MoneyController {
@@ -36,7 +38,13 @@ public class MoneyController {
                                                      HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate startOfMonth = ym.atDay(1);
+        LocalDate endOfMonth = ym.atEndOfMonth();
+        LocalDateTime startOfMonthTime = startOfMonth.atStartOfDay();
+        LocalDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX);
 
-        return transactionRepository.calculateBudgetedAmountByMonthAndYear(userId, month, year);
+
+        return transactionRepository.calculateBudgetedAmountByMonthAndYear(userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
     }
 }
