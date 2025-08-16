@@ -42,36 +42,32 @@ public class AccountController {
             @RequestParam int year,
             @RequestParam int month,
             @RequestParam String timezone,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
+
         String userId = (String) request.getAttribute("firebaseUid");
 
         ZoneId zoneId = ZoneId.of(timezone);
 
-        System.out.println(zoneId);
-
         YearMonth ym = YearMonth.of(year, month);
 
-        // LocalDate for spread filtering
-        LocalDate startOfMonthDate = ym.atDay(1);
-        LocalDate endOfMonthDate = ym.atEndOfMonth();
+        // Start of month in user timezone
+        ZonedDateTime startOfMonth = ym.atDay(1).atStartOfDay(zoneId);
+        // Start of next month in user timezone
+        ZonedDateTime startOfNextMonth = ym.plusMonths(1).atDay(1).atStartOfDay(zoneId);
 
-        // OffsetDateTime for 'date' field filtering (UTC)
-        OffsetDateTime startOfMonthDateTime = ym.atDay(1)
-                .atStartOfDay(zoneId)
-                .toOffsetDateTime();
-        OffsetDateTime endOfMonthDateTime = ym.atEndOfMonth()
-                .atTime(LocalTime.MAX)
-                .atZone(zoneId)
-                .toOffsetDateTime();
+        OffsetDateTime startOfMonthUTC = startOfMonth.toOffsetDateTime();
+        OffsetDateTime startOfNextMonthUTC = startOfNextMonth.toOffsetDateTime();
+
+        LocalDate startOfMonthDate = startOfMonth.toLocalDate();
+        LocalDate endOfMonthDate = startOfMonth.plusMonths(1).minusDays(1).toLocalDate();
 
         return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
                 id,
                 userId,
                 startOfMonthDate,
                 endOfMonthDate,
-                startOfMonthDateTime,
-                endOfMonthDateTime
+                startOfMonthUTC,
+                startOfNextMonthUTC // use exclusive upper bound
         );
     }
 

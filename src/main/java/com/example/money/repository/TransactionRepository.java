@@ -32,7 +32,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                       OR
                       (
                           (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                          AND t.date BETWEEN :startOfMonthDateTime AND :endOfMonthDateTime
+                          AND t.date >= :startOfMonthDateTime
+                          AND t.date < :endOfMonthDateTime
                       )
                   )
             """)
