@@ -67,7 +67,7 @@ public class AccountController {
                 startOfMonthDate,
                 endOfMonthDate,
                 startOfMonthUTC,
-                startOfNextMonthUTC // use exclusive upper bound
+                startOfNextMonthUTC
         );
     }
 
@@ -76,12 +76,21 @@ public class AccountController {
     public BigDecimal getBalance(@PathVariable Long id,
                                  @RequestParam int year,
                                  @RequestParam int month,
+                                 @RequestParam String timezone,
                                  HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
+        ZoneId zoneId = ZoneId.of(timezone);
         YearMonth ym = YearMonth.of(year, month);
+
+        // Determine end-of-month date in user's timezone (for spread checks using LocalDate)
         LocalDate endOfMonthDate = ym.atEndOfMonth();
-        OffsetDateTime endOfMonthDateTime = endOfMonthDate.atTime(23, 59, 59).atOffset(ZoneOffset.UTC);
+
+        // End of month at 23:59:59 in user's timezone (inclusive bound)
+        OffsetDateTime endOfMonthDateTime = ym.atEndOfMonth()
+                .atTime(LocalTime.of(23, 59, 59))
+                .atZone(zoneId)
+                .toOffsetDateTime();
 
         List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
                 id, userId, endOfMonthDateTime, endOfMonthDate
