@@ -40,7 +40,7 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        if (isDevMode() && !testFirebaseUid.isEmpty()) {
+        if (isSwaggerMode() && !testFirebaseUid.isEmpty()) {
             // In dev mode, use the configured test UID
             request.setAttribute("firebaseUid", testFirebaseUid);
             filterChain.doFilter(request, response);
@@ -66,7 +66,7 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean isDevMode() {
-        return activeProfile.contains("dev");
+    private boolean isSwaggerMode() {
+        return activeProfile.contains("swagger");
     }
 }
