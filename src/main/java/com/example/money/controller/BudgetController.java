@@ -13,9 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -75,8 +76,8 @@ public class BudgetController {
         YearMonth ym = YearMonth.of(year, month);
         LocalDate startOfMonth = ym.atDay(1);
         LocalDate endOfMonth = ym.atEndOfMonth();
-        LocalDateTime startOfMonthTime = startOfMonth.atStartOfDay();
-        LocalDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX);
+        OffsetDateTime startOfMonthTime = startOfMonth.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
 
         return transactionRepository
                 .findByBudgetIdAndUserIdAndDateRange(

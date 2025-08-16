@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -13,13 +13,13 @@ import java.util.List;
 @Service
 public class AccountService {
 
-    public BigDecimal calculateBalance(List<Transaction> transactions, Long accountId, LocalDateTime endOfMonth) {
+    public BigDecimal calculateBalance(List<Transaction> transactions, Long accountId, OffsetDateTime endOfMonth) {
         return transactions.stream()
                 .map(t -> calculateTransactionAmount(t, accountId, endOfMonth))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private BigDecimal calculateTransactionAmount(Transaction t, Long accountId, LocalDateTime endOfMonth) {
+    private BigDecimal calculateTransactionAmount(Transaction t, Long accountId, OffsetDateTime endOfMonth) {
         boolean isIncomingTransfer = t.getDestination() != null
                 && t.getDestination().getId().equals(accountId);
 
@@ -36,7 +36,7 @@ public class AccountService {
         return t.getSpreadStart() != null && t.getSpreadEnd() != null;
     }
 
-    private BigDecimal calculateSpreadAmount(Transaction t, LocalDateTime endOfMonth) {
+    private BigDecimal calculateSpreadAmount(Transaction t, OffsetDateTime endOfMonth) {
         YearMonth spreadStart = YearMonth.from(t.getSpreadStart());
         YearMonth spreadEnd = YearMonth.from(t.getSpreadEnd());
         YearMonth effectiveEnd = YearMonth.from(endOfMonth);

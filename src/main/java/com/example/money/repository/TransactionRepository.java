@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -41,8 +41,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("userId") String userId,
             @Param("startOfMonthDate") LocalDate startOfMonthDate,
             @Param("endOfMonthDate") LocalDate endOfMonthDate,
-            @Param("startOfMonthDateTime") LocalDateTime startOfMonthDateTime,
-            @Param("endOfMonthDateTime") LocalDateTime endOfMonthDateTime
+            @Param("startOfMonthDateTime") OffsetDateTime startOfMonthDateTime,
+            @Param("endOfMonthDateTime") OffsetDateTime endOfMonthDateTime
     );
 
     // find transactions (+budget, +accounts) of a budget for a given month (based on spread -> reference -> date)
@@ -74,8 +74,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("userId") String userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDateTime") LocalDateTime endDateTime
+            @Param("startDateTime") OffsetDateTime startDateTime,
+            @Param("endDateTime") OffsetDateTime endDateTime
     );
 
 
@@ -98,7 +98,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findUpToMonthAndYearPaidTransactions(
             @Param("accountId") Long accountId,
             @Param("userId") String userId,
-            @Param("endOfMonthDateTime") LocalDateTime endOfMonthDateTime,
+            @Param("endOfMonthDateTime") OffsetDateTime endOfMonthDateTime,
             @Param("endOfMonthDate") LocalDate endOfMonthDate
     );
 
@@ -163,8 +163,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("userId") String userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDateTime") LocalDateTime endDateTime
+            @Param("startDateTime") OffsetDateTime startDateTime,
+            @Param("endDateTime") OffsetDateTime endDateTime
     );
 
     // find transactions of a budget in a given period based on (referenceDate -> spread -> date)
@@ -191,8 +191,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("budgetId") Long budgetId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("endDateTime") LocalDateTime endDateTime
+            @Param("startDateTime") OffsetDateTime startDateTime,
+            @Param("endDateTime") OffsetDateTime endDateTime
     );
 
     /*Old*/

@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Entity
@@ -30,7 +31,7 @@ public class Transaction {
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDateTime date;
+    private OffsetDateTime date;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")

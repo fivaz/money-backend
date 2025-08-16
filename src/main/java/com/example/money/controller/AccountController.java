@@ -13,9 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,8 +51,8 @@ public class AccountController {
         LocalDate startOfMonth = ym.atDay(1);
         LocalDate endOfMonth = ym.atEndOfMonth();
 
-        LocalDateTime startOfMonthDateTime = startOfMonth.atStartOfDay();
-        LocalDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX);
+        OffsetDateTime startOfMonthDateTime = startOfMonth.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
 
         return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
                 id,
@@ -73,7 +74,7 @@ public class AccountController {
 
         YearMonth ym = YearMonth.of(year, month);
         LocalDate endOfMonthDate = ym.atEndOfMonth();
-        LocalDateTime endOfMonthDateTime = endOfMonthDate.atTime(23, 59, 59);
+        OffsetDateTime endOfMonthDateTime = endOfMonthDate.atTime(23, 59, 59).atOffset(ZoneOffset.UTC);
 
         List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
                 id, userId, endOfMonthDateTime, endOfMonthDate

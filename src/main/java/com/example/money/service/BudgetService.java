@@ -8,10 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
+import java.time.ZoneOffset;
 
 @Service
 public class BudgetService {
@@ -72,8 +73,8 @@ public class BudgetService {
 
         LocalDate endDate = targetMonth.minusMonths(1).atEndOfMonth();
 
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+        OffsetDateTime startDateTime = startDate.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime endDateTime = endDate.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
 
         BigDecimal previousTransactionsSum = transactionRepository
                 .findByBudgetIdAndDateInRange(budget.getId(), startDate, endDate, startDateTime, endDateTime)
