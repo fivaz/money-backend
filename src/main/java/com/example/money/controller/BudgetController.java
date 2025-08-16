@@ -12,11 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.YearMonth;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,24 +65,34 @@ public class BudgetController {
             @PathVariable Long id,
             @RequestParam int year,
             @RequestParam int month,
+            @RequestParam String timezone,
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
+        ZoneId zoneId = ZoneId.of(timezone);
+
         YearMonth ym = YearMonth.of(year, month);
-        LocalDate startOfMonth = ym.atDay(1);
-        LocalDate endOfMonth = ym.atEndOfMonth();
-        OffsetDateTime startOfMonthTime = startOfMonth.atStartOfDay().atOffset(ZoneOffset.UTC);
-        OffsetDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
+
+        // Start of month in user timezone
+        ZonedDateTime startOfMonth = ym.atDay(1).atStartOfDay(zoneId);
+        // Start of next month in user timezone
+        ZonedDateTime startOfNextMonth = ym.plusMonths(1).atDay(1).atStartOfDay(zoneId);
+
+        OffsetDateTime startOfMonthUTC = startOfMonth.toOffsetDateTime();
+        OffsetDateTime startOfNextMonthUTC = startOfNextMonth.toOffsetDateTime();
+
+        LocalDate startOfMonthDate = startOfMonth.toLocalDate();
+        LocalDate endOfMonthDate = startOfMonth.plusMonths(1).minusDays(1).toLocalDate();
 
         return transactionRepository
                 .findByBudgetIdAndUserIdAndDateRange(
                         id,
                         userId,
-                        startOfMonth,
-                        endOfMonth,
-                        startOfMonthTime,
-                        endOfMonthTime
+                        startOfMonthDate,
+                        endOfMonthDate,
+                        startOfMonthUTC,
+                        startOfNextMonthUTC
                 );
     }
 
