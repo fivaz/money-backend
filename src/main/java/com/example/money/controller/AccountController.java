@@ -12,11 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.YearMonth;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,24 +37,39 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/transactions")
-    public List<Transaction> getTransactionsByAccountAndMonth(@PathVariable Long id,
-                                                              @RequestParam int year,
-                                                              @RequestParam int month,
-                                                              HttpServletRequest request) {
+    public List<Transaction> getTransactionsByAccountAndMonth(
+            @PathVariable Long id,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam String timezone,
+            HttpServletRequest request
+    ) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        YearMonth ym = YearMonth.of(year, month);
-        LocalDate startOfMonth = ym.atDay(1);
-        LocalDate endOfMonth = ym.atEndOfMonth();
+        ZoneId zoneId = ZoneId.of(timezone);
 
-        OffsetDateTime startOfMonthDateTime = startOfMonth.atStartOfDay().atOffset(ZoneOffset.UTC);
-        OffsetDateTime endOfMonthDateTime = endOfMonth.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
+        System.out.println(zoneId);
+
+        YearMonth ym = YearMonth.of(year, month);
+
+        // LocalDate for spread filtering
+        LocalDate startOfMonthDate = ym.atDay(1);
+        LocalDate endOfMonthDate = ym.atEndOfMonth();
+
+        // OffsetDateTime for 'date' field filtering (UTC)
+        OffsetDateTime startOfMonthDateTime = ym.atDay(1)
+                .atStartOfDay(zoneId)
+                .toOffsetDateTime();
+        OffsetDateTime endOfMonthDateTime = ym.atEndOfMonth()
+                .atTime(LocalTime.MAX)
+                .atZone(zoneId)
+                .toOffsetDateTime();
 
         return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
                 id,
                 userId,
-                startOfMonth,
-                endOfMonth,
+                startOfMonthDate,
+                endOfMonthDate,
                 startOfMonthDateTime,
                 endOfMonthDateTime
         );
