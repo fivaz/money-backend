@@ -30,7 +30,14 @@ public class MoneyController {
     public BigDecimal getBalance(HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        return transactionRepository.calculateBalance(userId);
+        return transactionRepository.calculatePaidBalance(userId);
+    }
+
+    @GetMapping("/calculate-unpaid-balance")
+    public BigDecimal getUnpaidBalance(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        return transactionRepository.calculateUnpaidBalance(userId);
     }
 
     @GetMapping("/calculate-budgeted-spent")

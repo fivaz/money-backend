@@ -132,11 +132,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 JOIN t.account a
                 WHERE t.userId = :userId
                   AND t.isDeleted = false
-                  AND t.isPaid = true
                   AND t.destination IS NULL
                   AND a.isDeleted = false
+                  AND t.isPaid = true
             """)
-    BigDecimal calculateBalance(@Param("userId") String userId);
+    BigDecimal calculatePaidBalance(@Param("userId") String userId);
+
+
+    // sum of unpaid transactions
+    @Query("""
+                SELECT COALESCE(SUM(t.amount), 0)
+                FROM Transaction t
+                JOIN t.account a
+                WHERE t.userId = :userId
+                  AND t.isDeleted = false
+                  AND t.destination IS NULL
+                  AND a.isDeleted = false
+                  AND t.isPaid = false
+            """)
+    BigDecimal calculateUnpaidBalance(@Param("userId") String userId);
 
     // sum of paid budgeted transactions in a given period (month)
     @Query("""
