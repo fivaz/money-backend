@@ -140,28 +140,59 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // sum of paid budgeted transactions in a given period (month)
     @Query("""
-                SELECT COALESCE(SUM(t.amount), 0)
-                FROM Transaction t
-                WHERE t.userId = :userId
-                  AND t.isDeleted = false
-                  AND t.isPaid = true
-                  AND t.budget IS NOT NULL
-                  AND (
-                    (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
-                    OR (
-                      t.referenceDate IS NULL
-                      AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
-                      AND t.spreadStart <= :endDate
-                      AND t.spreadEnd >= :startDate
-                    )
-                    OR (
-                      t.referenceDate IS NULL
-                      AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
-                      AND t.date BETWEEN :startDateTime AND :endDateTime
-                    )
-                  )
+            SELECT COALESCE(SUM(t.amount), 0)
+            FROM Transaction t
+            WHERE t.userId = :userId
+              AND t.isDeleted = false
+              AND t.budget IS NOT NULL
+              AND t.isPaid = true
+              AND (
+                (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
+                OR (
+                  t.referenceDate IS NULL
+                  AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                  AND t.spreadStart <= :endDate
+                  AND t.spreadEnd >= :startDate
+                )
+                OR (
+                  t.referenceDate IS NULL
+                  AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                  AND t.date BETWEEN :startDateTime AND :endDateTime
+                )
+              )
             """)
-    BigDecimal calculateBudgetedAmountInDateRange(
+    BigDecimal calculatePaidBudgetedAmountInDateRange(
+            @Param("userId") String userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") OffsetDateTime startDateTime,
+            @Param("endDateTime") OffsetDateTime endDateTime
+    );
+
+    // sum of unpaid budgeted transactions in a given period (month)
+    @Query("""
+            SELECT COALESCE(SUM(t.amount), 0)
+            FROM Transaction t
+            WHERE t.userId = :userId
+              AND t.isDeleted = false
+              AND t.budget IS NOT NULL
+              AND t.isPaid = false
+              AND (
+                (t.referenceDate IS NOT NULL AND t.referenceDate BETWEEN :startDate AND :endDate)
+                OR (
+                  t.referenceDate IS NULL
+                  AND t.spreadStart IS NOT NULL AND t.spreadEnd IS NOT NULL
+                  AND t.spreadStart <= :endDate
+                  AND t.spreadEnd >= :startDate
+                )
+                OR (
+                  t.referenceDate IS NULL
+                  AND (t.spreadStart IS NULL OR t.spreadEnd IS NULL)
+                  AND t.date BETWEEN :startDateTime AND :endDateTime
+                )
+              )
+            """)
+    BigDecimal calculateUnpaidBudgetedAmountInDateRange(
             @Param("userId") String userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,

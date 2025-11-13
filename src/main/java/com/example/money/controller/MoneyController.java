@@ -1,5 +1,6 @@
 package com.example.money.controller;
 
+import com.example.money.dto.BudgetedSpentResponse;
 import com.example.money.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -34,10 +35,12 @@ public class MoneyController {
     }
 
     @GetMapping("/calculate-budgeted-spent")
-    public BigDecimal calculateBudgetedAmountBetween(@RequestParam int year,
-                                                     @RequestParam int month,
-                                                     @RequestParam String timezone,
-                                                     HttpServletRequest request) {
+    public BudgetedSpentResponse calculateBudgetedAmountBetween(
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam String timezone,
+            HttpServletRequest request) {
+
         String userId = (String) request.getAttribute("firebaseUid");
 
         ZoneId zoneId = ZoneId.of(timezone);
@@ -47,6 +50,12 @@ public class MoneyController {
         OffsetDateTime startOfMonthTime = startOfMonth.atStartOfDay(zoneId).toOffsetDateTime();
         OffsetDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX).atZone(zoneId).toOffsetDateTime();
 
-        return transactionRepository.calculateBudgetedAmountInDateRange(userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
+        BigDecimal paid = transactionRepository.calculatePaidBudgetedAmountInDateRange(
+                userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
+
+        BigDecimal unpaid = transactionRepository.calculateUnpaidBudgetedAmountInDateRange(
+                userId, startOfMonth, endOfMonth, startOfMonthTime, endOfMonthTime);
+
+        return new BudgetedSpentResponse(paid, unpaid);
     }
 }
