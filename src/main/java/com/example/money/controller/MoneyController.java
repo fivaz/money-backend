@@ -27,10 +27,24 @@ public class MoneyController {
     }
 
     @GetMapping("/calculate-balance")
-    public BigDecimal getBalance(HttpServletRequest request) {
+    public BigDecimal getBalance(
+            @RequestParam String asOf,
+            @RequestParam String timezone,
+            HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
-        return transactionRepository.calculatePaidBalance(userId);
+        // 1. Parse inputs
+        LocalDate localDate = LocalDate.parse(asOf);
+        ZoneId zoneId = ZoneId.of(timezone);
+
+        // 2. Calculate Cutoff
+        // We want "Up to 2023-10-25", which means we include everything
+        // BEFORE 2023-10-26 00:00:00 in the user's timezone.
+        OffsetDateTime cutoffDate = localDate.plusDays(1)
+                .atStartOfDay(zoneId)
+                .toOffsetDateTime();
+
+        return transactionRepository.calculatePaidBalance(userId, cutoffDate);
     }
 
     @GetMapping("/calculate-unpaid-balance")

@@ -125,18 +125,22 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
-    // sum of paid transactions
+    // sum of paid transactions up to a certain date
     @Query("""
-                SELECT COALESCE(SUM(t.amount), 0)
-                FROM Transaction t
-                JOIN t.account a
-                WHERE t.userId = :userId
-                  AND t.isDeleted = false
-                  AND t.destination IS NULL
-                  AND a.isDeleted = false
-                  AND t.isPaid = true
-            """)
-    BigDecimal calculatePaidBalance(@Param("userId") String userId);
+    SELECT COALESCE(SUM(t.amount), 0)
+    FROM Transaction t
+    JOIN t.account a
+    WHERE t.userId = :userId
+      AND t.isDeleted = false
+      AND t.destination IS NULL
+      AND a.isDeleted = false
+      AND t.isPaid = true
+      AND t.date < :cutoffDate
+""")
+    BigDecimal calculatePaidBalance(
+            @Param("userId") String userId,
+            @Param("cutoffDate") OffsetDateTime cutoffDate
+    );
 
 
     // sum of unpaid transactions
