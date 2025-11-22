@@ -39,8 +39,7 @@ public class AccountController {
     @GetMapping("/{id}/transactions")
     public List<Transaction> getTransactionsByAccountAndMonth(
             @PathVariable Long id,
-            @RequestParam int year,
-            @RequestParam int month,
+            @RequestParam String asOf,
             @RequestParam String timezone,
             HttpServletRequest request) {
 
@@ -48,7 +47,12 @@ public class AccountController {
 
         ZoneId zoneId = ZoneId.of(timezone);
 
-        YearMonth ym = YearMonth.of(year, month);
+        // 1. Parse the asOf string (yyyy-MM-dd)
+        // LocalDate.parse defaults to ISO_LOCAL_DATE which matches yyyy-MM-dd
+        LocalDate asOfDate = LocalDate.parse(asOf);
+
+        // 2. Convert the specific date to the YearMonth representation
+        YearMonth ym = YearMonth.from(asOfDate);
 
         // Start of month in user timezone
         ZonedDateTime startOfMonth = ym.atDay(1).atStartOfDay(zoneId);
