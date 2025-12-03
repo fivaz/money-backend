@@ -27,14 +27,18 @@ public class BudgetController {
 
     private final BudgetService budgetService;
 
-    @GetMapping("/by-date")
+    @GetMapping
     public List<Budget> getByDate(
-            @RequestParam int year,
-            @RequestParam int month,
+            @RequestParam String asOf,
+            @RequestParam String timezone,
             HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
-        YearMonth targetMonth = YearMonth.of(year, month);
+        ZoneId zoneId = ZoneId.of(timezone);
+        LocalDate asOfDate = LocalDate.parse(asOf);
+        LocalDate zonefiedLocalDate = asOfDate.atStartOfDay(zoneId).toLocalDate();
+        YearMonth targetMonth = YearMonth.from(zonefiedLocalDate);
+
         LocalDate firstDay = targetMonth.atDay(1);
         LocalDate lastDay = targetMonth.atEndOfMonth();
 
