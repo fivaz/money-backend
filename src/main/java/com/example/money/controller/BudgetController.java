@@ -45,14 +45,18 @@ public class BudgetController {
         return budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
     }
 
-    @GetMapping("/by-date-with-details")
+    // TODO rename BudgetWithDetails to RolloverBudget
+    // TODO rename is_accumulative to isRollover
+    // TODO rename accumulative_amount to carryOverAmount
+    @GetMapping("/with-carry-over")
     public List<BudgetDetailsDTO> getByDateWithDetails(
-            @RequestParam int year,
-            @RequestParam int month,
+            @RequestParam String asOf,
             HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
-        YearMonth targetMonth = YearMonth.of(year, month);
+        LocalDate asOfDate = LocalDate.parse(asOf);
+        YearMonth targetMonth = YearMonth.from(asOfDate);
+
         LocalDate firstDay = targetMonth.atDay(1);
         LocalDate lastDay = targetMonth.atEndOfMonth();
 
