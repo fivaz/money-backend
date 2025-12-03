@@ -63,8 +63,7 @@ public class BudgetController {
     @GetMapping("/{id}/transactions")
     public List<Transaction> getTransactionsByBudgetAndMonth(
             @PathVariable Long id,
-            @RequestParam int year,
-            @RequestParam int month,
+            @RequestParam String asOf,
             @RequestParam String timezone,
             HttpServletRequest request
     ) {
@@ -72,7 +71,9 @@ public class BudgetController {
 
         ZoneId zoneId = ZoneId.of(timezone);
 
-        YearMonth ym = YearMonth.of(year, month);
+        LocalDate asOfDate = LocalDate.parse(asOf);
+
+        YearMonth ym = YearMonth.from(asOfDate);
 
         // Start of month in user timezone
         ZonedDateTime startOfMonth = ym.atDay(1).atStartOfDay(zoneId);
