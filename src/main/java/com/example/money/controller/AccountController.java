@@ -78,29 +78,31 @@ public class AccountController {
 
     @GetMapping("/{id}/balance")
     public BigDecimal getBalance(@PathVariable Long id,
-                                 @RequestParam int year,
-                                 @RequestParam int month,
+                                 @RequestParam String asOf,
                                  @RequestParam String timezone,
                                  HttpServletRequest request) {
+
         String userId = (String) request.getAttribute("firebaseUid");
 
         ZoneId zoneId = ZoneId.of(timezone);
-        YearMonth ym = YearMonth.of(year, month);
 
-        // Determine end-of-month date in user's timezone (for spread checks using LocalDate)
-        LocalDate endOfMonthDate = ym.atEndOfMonth();
+        // Parse asOf into a LocalDate using the user's timezone
+        LocalDate asOfDate = LocalDate.parse(asOf); // format: YYYY-MM-DD
 
-        // End of month at 23:59:59 in user's timezone (inclusive bound)
-        OffsetDateTime endOfMonthDateTime = ym.atEndOfMonth()
+        // Build an OffsetDateTime at 23:59:59 of the asOf day
+        OffsetDateTime asOfDateTime = asOfDate
                 .atTime(LocalTime.of(23, 59, 59))
                 .atZone(zoneId)
                 .toOffsetDateTime();
 
         List<Transaction> transactions = transactionRepository.findUpToMonthAndYearPaidTransactions(
-                id, userId, endOfMonthDateTime, endOfMonthDate
+                id,
+                userId,
+                asOfDateTime,
+                asOfDate
         );
 
-        return accountService.calculateBalance(transactions, id, endOfMonthDateTime);
+        return accountService.calculateBalance(transactions, id, asOfDateTime);
     }
 
     @PostMapping

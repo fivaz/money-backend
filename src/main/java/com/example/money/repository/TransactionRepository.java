@@ -81,7 +81,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
-    //    find transactions of an account from the beginning up to a given month (based on spread -> date)
+    //    find transactions of an account from the beginning up to a given date (based on 1o spread 2o date)
     @Query("""
                 SELECT t FROM Transaction t
                 JOIN FETCH t.account

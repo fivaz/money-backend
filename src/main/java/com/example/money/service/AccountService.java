@@ -13,20 +13,20 @@ import java.util.List;
 @Service
 public class AccountService {
 
-    public BigDecimal calculateBalance(List<Transaction> transactions, Long accountId, OffsetDateTime endOfMonth) {
+    public BigDecimal calculateBalance(List<Transaction> transactions, Long accountId, OffsetDateTime asOfDateTime) {
         return transactions.stream()
-                .map(t -> calculateTransactionAmount(t, accountId, endOfMonth))
+                .map(t -> calculateTransactionAmount(t, accountId, asOfDateTime))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private BigDecimal calculateTransactionAmount(Transaction t, Long accountId, OffsetDateTime endOfMonth) {
+    private BigDecimal calculateTransactionAmount(Transaction t, Long accountId, OffsetDateTime asOfDateTime) {
         boolean isIncomingTransfer = t.getDestination() != null
                 && t.getDestination().getId().equals(accountId);
 
         BigDecimal amount = t.getAmount();
 
         if (isSpreadTransaction(t)) {
-            amount = calculateSpreadAmount(t, endOfMonth);
+            amount = calculateSpreadAmount(t, asOfDateTime);
         }
 
         return isIncomingTransfer ? amount.abs() : amount;
@@ -36,16 +36,16 @@ public class AccountService {
         return t.getSpreadStart() != null && t.getSpreadEnd() != null;
     }
 
-    private BigDecimal calculateSpreadAmount(Transaction t, OffsetDateTime endOfMonth) {
+    private BigDecimal calculateSpreadAmount(Transaction t, OffsetDateTime asOfDateTime) {
         YearMonth spreadStart = YearMonth.from(t.getSpreadStart());
         YearMonth spreadEnd = YearMonth.from(t.getSpreadEnd());
-        YearMonth effectiveEnd = YearMonth.from(endOfMonth);
+        YearMonth asOfMonth = YearMonth.from(asOfDateTime);
 
-        if (effectiveEnd.isBefore(spreadStart)) {
+        if (asOfMonth.isBefore(spreadStart)) {
             return BigDecimal.ZERO; // not started yet
         }
 
-        YearMonth calculationEnd = spreadEnd.isBefore(effectiveEnd) ? spreadEnd : effectiveEnd;
+        YearMonth calculationEnd = spreadEnd.isBefore(asOfMonth) ? spreadEnd : asOfMonth;
         long monthsInRange = ChronoUnit.MONTHS.between(spreadStart, calculationEnd) + 1;
 
         return monthsInRange < 1 ? BigDecimal.ZERO : t.getAmount().multiply(BigDecimal.valueOf(monthsInRange));
