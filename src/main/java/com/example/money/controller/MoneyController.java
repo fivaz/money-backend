@@ -29,7 +29,7 @@ public class MoneyController {
     @GetMapping("/calculate-balance")
     public BigDecimal getBalance(
             @RequestParam String asOf,
-            @RequestParam String timezone,
+            @RequestHeader("X-User-Timezone") String timezone,
             HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
@@ -57,7 +57,7 @@ public class MoneyController {
     @GetMapping("/calculate-budgeted-spent")
     public BigDecimal calculateBudgetedAmountBetween(@RequestParam int year,
                                                      @RequestParam int month,
-                                                     @RequestParam String timezone,
+                                                     @RequestHeader("X-User-Timezone") String timezone,
                                                      HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 

@@ -30,7 +30,7 @@ public class BudgetController {
     @GetMapping
     public List<Budget> getByDate(
             @RequestParam String asOf,
-            @RequestParam String timezone,
+            @RequestHeader("X-User-Timezone") String timezone,
             HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
@@ -72,7 +72,7 @@ public class BudgetController {
     public List<Transaction> getTransactionsByBudgetAndMonth(
             @PathVariable Long id,
             @RequestParam String asOf,
-            @RequestParam String timezone,
+            @RequestHeader("X-User-Timezone") String timezone,
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");

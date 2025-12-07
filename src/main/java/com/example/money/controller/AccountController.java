@@ -40,7 +40,7 @@ public class AccountController {
     public List<Transaction> getTransactionsByAccountAndMonth(
             @PathVariable Long id,
             @RequestParam String asOf,
-            @RequestParam String timezone,
+            @RequestHeader("X-User-Timezone") String timezone,
             HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
@@ -79,7 +79,7 @@ public class AccountController {
     @GetMapping("/{id}/balance")
     public BigDecimal getBalance(@PathVariable Long id,
                                  @RequestParam String asOf,
-                                 @RequestParam String timezone,
+                                 @RequestHeader("X-User-Timezone") String timezone,
                                  HttpServletRequest request) {
 
         String userId = (String) request.getAttribute("firebaseUid");
