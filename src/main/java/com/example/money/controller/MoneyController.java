@@ -55,16 +55,20 @@ public class MoneyController {
     }
 
     @GetMapping("/calculate-budgeted-spent")
-    public BigDecimal calculateBudgetedAmountBetween(@RequestParam int year,
-                                                     @RequestParam int month,
-                                                     @RequestHeader("X-User-Timezone") String timezone,
-                                                     HttpServletRequest request) {
+    public BigDecimal calculateBudgetedAmountBetween(
+            @RequestParam String asOf,
+            @RequestHeader("X-User-Timezone") String timezone,
+            HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
 
         ZoneId zoneId = ZoneId.of(timezone);
-        YearMonth ym = YearMonth.of(year, month);
+
+        LocalDate asOfDate = LocalDate.parse(asOf);
+        YearMonth ym = YearMonth.from(asOfDate);
+
         LocalDate startOfMonth = ym.atDay(1);
         LocalDate endOfMonth = ym.atEndOfMonth();
+
         OffsetDateTime startOfMonthTime = startOfMonth.atStartOfDay(zoneId).toOffsetDateTime();
         OffsetDateTime endOfMonthTime = endOfMonth.atTime(LocalTime.MAX).atZone(zoneId).toOffsetDateTime();
 
