@@ -38,7 +38,7 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/transactions")
-    public List<Transaction> getTransactionsByAccountAndMonth(
+    public ResponseEntity<List<Transaction>> getTransactionsByAccountAndMonth(
             @PathVariable Long id,
             @RequestParam String asOf,
             @RequestHeader("X-User-Timezone") String timezone,
@@ -66,7 +66,7 @@ public class AccountController {
         LocalDate startOfMonthDate = startOfMonth.toLocalDate();
         LocalDate endOfMonthDate = startOfMonth.plusMonths(1).minusDays(1).toLocalDate();
 
-        return transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
+        List<Transaction> transactions = transactionRepository.findByAccountIdOrDestinationIdAndUserIdAndDateRange(
                 id,
                 userId,
                 startOfMonthDate,
@@ -74,11 +74,13 @@ public class AccountController {
                 startOfMonthUTC,
                 startOfNextMonthUTC
         );
+
+        return ResponseEntity.ok(transactions);
     }
 
 
     @GetMapping("/{id}/balance")
-    public BigDecimal getBalance(@PathVariable Long id,
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long id,
                                  @RequestParam String asOf,
                                  @RequestHeader("X-User-Timezone") String timezone,
                                  HttpServletRequest request) {
@@ -103,7 +105,8 @@ public class AccountController {
                 asOfDate
         );
 
-        return accountService.calculateBalance(transactions, id, asOfDateTime);
+        BigDecimal balance = accountService.calculateBalance(transactions, id, asOfDateTime);
+        return ResponseEntity.ok(balance);
     }
 
     @PostMapping
@@ -116,7 +119,7 @@ public class AccountController {
             Account saved = accountRepository.save(account);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to create account: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Failed to create account: " + e.getMessage()));
         }
     }
 
@@ -126,12 +129,12 @@ public class AccountController {
 
         Optional<Account> optional = accountRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Account not found."));
         }
 
         Account account = optional.get();
         if (!account.getUserId().equals(userId) || account.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted account.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized or deleted account."));
         }
 
         account.setName(updated.getName());
@@ -153,13 +156,13 @@ public class AccountController {
 
             Optional<Account> optional = accountRepository.findById(incoming.getId());
             if (optional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found: ID " + incoming.getId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Account not found: ID " + incoming.getId()));
             }
 
             Account account = optional.get();
 
             if (!account.getUserId().equals(userId) || account.isDeleted()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized to reorder account: ID " + account.getId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized to reorder account: ID " + account.getId()));
             }
 
             // Update sort order to match new position
@@ -179,12 +182,12 @@ public class AccountController {
 
         Optional<Account> optional = accountRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Account not found."));
         }
 
         Account account = optional.get();
         if (!account.getUserId().equals(userId) || account.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or already deleted.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized or already deleted."));
         }
 
         account.setDeleted(true);

@@ -35,7 +35,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping("/search")
-    public Page<Transaction> searchTransactions(
+    public ResponseEntity<Page<Transaction>> searchTransactions(
             @RequestParam String query,
             @PageableDefault(size = 10) Pageable pageable,
             HttpServletRequest request
@@ -46,7 +46,8 @@ public class TransactionController {
             query = query.trim().toLowerCase();
         }
 
-        return transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable);
+        Page<Transaction> result = transactionRepository.searchByDescriptionOrBudgetName(userId, query, pageable);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping
@@ -62,14 +63,15 @@ public class TransactionController {
                     transaction.getBudget().getId(), userId
             );
             if (budgetOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid budget");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Invalid budget"));
             }
             transaction.setBudget(budgetOpt.get());
         } else {
             transaction.setBudget(null);
         }
 
-        return ResponseEntity.ok(transactionService.saveTransactionWithAccountChecks(transaction, userId));
+        Transaction saved = transactionService.saveTransactionWithAccountChecks(transaction, userId);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")

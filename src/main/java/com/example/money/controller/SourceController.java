@@ -55,7 +55,7 @@ public class SourceController {
             Source saved = sourceRepository.save(source);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to create source: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Failed to create source: " + e.getMessage()));
         }
     }
 
@@ -65,12 +65,12 @@ public class SourceController {
 
         Optional<Source> optional = sourceRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Source not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Source not found."));
         }
 
         Source source = optional.get();
         if (!source.getUserId().equals(userId) || source.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted source.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized or deleted source."));
         }
 
         source.setName(updated.getName());
@@ -93,13 +93,13 @@ public class SourceController {
 
             Optional<Source> optional = sourceRepository.findById(incoming.getId());
             if (optional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Source not found: ID " + incoming.getId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Source not found: ID " + incoming.getId()));
             }
 
             Source source = optional.get();
 
             if (!source.getUserId().equals(userId) || source.isDeleted()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized to reorder source: ID " + source.getId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized to reorder source: ID " + source.getId()));
             }
 
             // Update sort order to match new position
@@ -121,14 +121,14 @@ public class SourceController {
         if (optional.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body("Source not found.");
+                    .body(Map.of("message", "Source not found."));
         }
 
         Source source = optional.get();
         if (!source.getUserId().equals(userId) || source.isDeleted()) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body("Unauthorized or already deleted.");
+                    .body(Map.of("message", "Unauthorized or already deleted."));
         }
 
         source.setDeleted(true);

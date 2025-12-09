@@ -28,7 +28,7 @@ public class BudgetController {
     private final BudgetService budgetService;
 
     @GetMapping
-    public List<Budget> getByDate(
+    public ResponseEntity<?> getByDate(
             @RequestParam String asOf,
             @RequestHeader("X-User-Timezone") String timezone,
             HttpServletRequest request) {
@@ -42,14 +42,15 @@ public class BudgetController {
         LocalDate firstDay = targetMonth.atDay(1);
         LocalDate lastDay = targetMonth.atEndOfMonth();
 
-        return budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
+        List<Budget> budgets = budgetRepository.findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
+        return ResponseEntity.ok(budgets);
     }
 
     // TODO rename BudgetWithDetails to RolloverBudget
     // TODO rename is_accumulative to isRollover
     // TODO rename accumulative_amount to carryOverAmount
     @GetMapping("/with-carry-over")
-    public List<BudgetDetailsDTO> getByDateWithDetails(
+    public ResponseEntity<?> getByDateWithDetails(
             @RequestParam String asOf,
             HttpServletRequest request) {
 
@@ -63,13 +64,15 @@ public class BudgetController {
         List<Budget> budgets = budgetRepository
                 .findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
 
-        return budgets.stream()
+        List<BudgetDetailsDTO> details = budgets.stream()
                 .map(budget -> budgetService.buildBudgetDetails(budget, targetMonth))
                 .collect(Collectors.toList());
+
+        return ResponseEntity.ok(details);
     }
 
     @GetMapping("/{id}/transactions")
-    public List<Transaction> getTransactionsByBudgetAndMonth(
+    public ResponseEntity<?> getTransactionsByBudgetAndMonth(
             @PathVariable Long id,
             @RequestParam String asOf,
             @RequestHeader("X-User-Timezone") String timezone,
@@ -94,7 +97,7 @@ public class BudgetController {
         LocalDate startOfMonthDate = startOfMonth.toLocalDate();
         LocalDate endOfMonthDate = startOfMonth.plusMonths(1).minusDays(1).toLocalDate();
 
-        return transactionRepository
+        List<Transaction> transactions = transactionRepository
                 .findByBudgetIdAndUserIdAndDateRange(
                         id,
                         userId,
@@ -103,6 +106,7 @@ public class BudgetController {
                         startOfMonthUTC,
                         startOfNextMonthUTC
                 );
+        return ResponseEntity.ok(transactions);
     }
 
     @PostMapping
@@ -115,7 +119,7 @@ public class BudgetController {
             Budget saved = budgetRepository.save(budget);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to create budget: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Failed to create budget: " + e.getMessage()));
         }
     }
 
@@ -125,12 +129,12 @@ public class BudgetController {
 
         Optional<Budget> optional = budgetRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Budget not found."));
         }
 
         Budget budget = optional.get();
         if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted budget.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized or deleted budget."));
         }
 
         budget.setName(updated.getName());
@@ -157,13 +161,13 @@ public class BudgetController {
 
             Optional<Budget> optional = budgetRepository.findById(incoming.getId());
             if (optional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found: ID " + incoming.getId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Budget not found: ID " + incoming.getId()));
             }
 
             Budget budget = optional.get();
 
             if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized to reorder budget: ID " + budget.getId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized to reorder budget: ID " + budget.getId()));
             }
 
             // Update sort order to match new position
@@ -173,7 +177,7 @@ public class BudgetController {
 
         budgetRepository.saveAll(toSave);
 
-        return ResponseEntity.ok(Map.of("message", "Budget deleted."));
+        return ResponseEntity.ok(Map.of("message", "Budgets reordered."));
     }
 
 
@@ -183,12 +187,12 @@ public class BudgetController {
 
         Optional<Budget> optional = budgetRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Budget not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Budget not found."));
         }
 
         Budget budget = optional.get();
         if (!budget.getUserId().equals(userId) || budget.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or already deleted.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Unauthorized or already deleted."));
         }
 
         budget.setDeleted(true);
