@@ -54,12 +54,15 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String idToken = header.substring(7);
+        String token = header.substring(7); // This is your Session Cookie value
         try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            // Use verifySessionCookie for the token sent from the Next.js server
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookie(token);
+
             request.setAttribute("firebaseUid", decodedToken.getUid());
         } catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Firebase token: " + e.getMessage());
+            // This will catch FirebaseAuthException if the cookie is expired or invalid
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Firebase session token: " + e.getMessage());
             return;
         }
 
