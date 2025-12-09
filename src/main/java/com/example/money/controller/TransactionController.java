@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -79,12 +80,16 @@ public class TransactionController {
 
         Optional<Transaction> optionalTx = transactionRepository.findById(id);
         if (optionalTx.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Transaction not found.");
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Transaction not found."));
         }
 
         Transaction tx = optionalTx.get();
         if (!tx.getUserId().equals(userId) || tx.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or deleted transaction.");
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Unauthorized or deleted transaction."));
         }
 
         // Validate budget
@@ -93,7 +98,9 @@ public class TransactionController {
                     updated.getBudget().getId(), userId
             );
             if (budgetOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid budget");
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Invalid budget"));
             }
             tx.setBudget(budgetOpt.get());
         } else {
@@ -102,12 +109,16 @@ public class TransactionController {
 
         // Validate account
         if (transactionService.doesNotOwnAccount(updated.getAccount(), userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid account");
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Invalid account"));
         }
 
         // Validate destination
         if (updated.getDestination() != null && transactionService.doesNotOwnAccount(updated.getDestination(), userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid destination account");
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Invalid destination account"));
         }
 
         // Apply updates to transaction
@@ -126,20 +137,20 @@ public class TransactionController {
         if (optionalTx.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body("Transaction not found.");
+                    .body(Map.of("message", "Transaction not found."));
         }
 
         Transaction tx = optionalTx.get();
         if (!tx.getUserId().equals(userId)) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body("Unauthorized to delete this transaction.");
+                    .body(Map.of("message", "Unauthorized to delete this transaction."));
         }
 
         if (tx.isDeleted()) {
             return ResponseEntity
                     .status(HttpStatus.GONE)
-                    .body("Transaction already deleted.");
+                    .body(Map.of("message", "Transaction already deleted."));
         }
 
         tx.setDeleted(true);

@@ -173,7 +173,7 @@ public class BudgetController {
 
         budgetRepository.saveAll(toSave);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Budget deleted."));
     }
 
 
@@ -194,6 +194,6 @@ public class BudgetController {
         budget.setDeleted(true);
         budgetRepository.save(budget);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Budget deleted."));
     }
 }

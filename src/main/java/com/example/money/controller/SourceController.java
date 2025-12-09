@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -108,7 +109,7 @@ public class SourceController {
 
         sourceRepository.saveAll(toSave);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Source reordered."));
     }
 
 
@@ -118,17 +119,21 @@ public class SourceController {
 
         Optional<Source> optional = sourceRepository.findById(id);
         if (optional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Source not found.");
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Source not found.");
         }
 
         Source source = optional.get();
         if (!source.getUserId().equals(userId) || source.isDeleted()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized or already deleted.");
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Unauthorized or already deleted.");
         }
 
         source.setDeleted(true);
         sourceRepository.save(source);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Source deleted."));
     }
 }

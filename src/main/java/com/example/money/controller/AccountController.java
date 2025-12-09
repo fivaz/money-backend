@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -168,7 +169,7 @@ public class AccountController {
 
         accountRepository.saveAll(toSave);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Account reordered."));
     }
 
 
@@ -189,6 +190,6 @@ public class AccountController {
         account.setDeleted(true);
         accountRepository.save(account);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Account deleted."));
     }
 }
