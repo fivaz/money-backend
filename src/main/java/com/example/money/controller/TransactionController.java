@@ -3,7 +3,6 @@ package com.example.money.controller;
 import com.example.money.dto.MonthlyExpenseSummary;
 import com.example.money.entity.Budget;
 import com.example.money.entity.Transaction;
-import com.example.money.repository.AccountRepository;
 import com.example.money.repository.BudgetRepository;
 import com.example.money.repository.TransactionRepository;
 import com.example.money.service.TransactionService;
@@ -15,10 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +46,14 @@ public class TransactionController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/monthly-summary")
+    public ResponseEntity<List<MonthlyExpenseSummary>> getMonthlySummary(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("firebaseUid");
+
+        List<MonthlyExpenseSummary> summary = transactionRepository.findMonthlyExpenseSummary(userId);
+        return ResponseEntity.ok(summary);
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Transaction transaction, HttpServletRequest request) {
         String userId = (String) request.getAttribute("firebaseUid");
@@ -71,7 +75,7 @@ public class TransactionController {
         }
 
         Transaction saved = transactionService.saveTransactionWithAccountChecks(transaction, userId);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
@@ -157,14 +161,6 @@ public class TransactionController {
 
         tx.setDeleted(true);
         transactionRepository.save(tx);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/monthly-summary")
-    public ResponseEntity<List<MonthlyExpenseSummary>> getMonthlySummary(HttpServletRequest request) {
-        String userId = (String) request.getAttribute("firebaseUid");
-
-        List<MonthlyExpenseSummary> summary = transactionRepository.findMonthlyExpenseSummary(userId);
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(Map.of("message", "Transaction deleted successfully."));
     }
 }

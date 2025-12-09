@@ -65,6 +65,7 @@ public class BudgetController {
                 .findBudgetsByUserIdWithinDateRangeSortOrderAsc(userId, firstDay, lastDay);
 
         List<BudgetDetailsDTO> details = budgets.stream()
+                .filter(budget -> !budget.isDeleted())
                 .map(budget -> budgetService.buildBudgetDetails(budget, targetMonth))
                 .collect(Collectors.toList());
 
@@ -79,6 +80,11 @@ public class BudgetController {
             HttpServletRequest request
     ) {
         String userId = (String) request.getAttribute("firebaseUid");
+
+        Optional<Budget> optionalBudget = budgetRepository.findById(id);
+        if (optionalBudget.isEmpty() || optionalBudget.get().isDeleted() || !optionalBudget.get().getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Budget not found."));
+        }
 
         ZoneId zoneId = ZoneId.of(timezone);
 
